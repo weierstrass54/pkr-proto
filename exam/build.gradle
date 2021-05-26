@@ -1,0 +1,16 @@
+group = 'com.ckontur.pkr.exam'
+version = '1.0.0'
+
+dependencies {
+    implementation project(':web-common'),
+        'org.springframework.boot:spring-boot-starter-jdbc',
+        'org.flywaydb:flyway-core:6.5.5'
+
+    testImplementation project(':testcontainers')
+
+    runtimeOnly 'org.postgresql:postgresql'
+}
+
+test {
+    useTestNG()
+}

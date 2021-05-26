@@ -1,0 +1,13 @@
+rootProject.name = 'pkr'
+include 'web-common'
+include 'websocket'
+include 'auth'
+include 'gstreamer'
+include 'crm'
+include 'record'
+include 'core'
+include 'discovery'
+include 'operator'
+include 'exam'
+include 'testcontainers'
+

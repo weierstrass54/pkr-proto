@@ -1,0 +1,20 @@
+server:
+  port: 8082
+  error:
+    whitelabel:
+      enabled: false
+spring:
+  application:
+    name: record
+  datasource:
+    url: jdbc:postgresql://localhost:5432/record
+    username: postgres
+    password: 123123
+  flyway:
+    locations: classpath:migrations
+  mvc:
+    throw-exception-if-no-handler-found: true
+pkr:
+  services:
+    crm:
+      url: http://localhost:8081

@@ -1,0 +1,16 @@
+server:
+  port: 8080
+  error:
+    whitelabel:
+      enabled: false
+spring:
+  application:
+    name: discovery
+  cloud:
+    zookeeper:
+      connect-string: localhost:2181
+  mvc:
+    throw-exception-if-no-handler-found: true
+ribbon:
+  eureka:
+    enabled: false

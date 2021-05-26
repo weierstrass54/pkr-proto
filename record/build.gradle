@@ -1,0 +1,14 @@
+group = 'com.ckontur.pkr.record'
+version = '1.0.0'
+
+dependencies {
+    implementation project(':web-common'),
+        'org.springframework.boot:spring-boot-starter-jdbc'
+        'org.flywaydb:flyway-core:6.5.5'
+
+    runtimeOnly 'org.postgresql:postgresql'
+}
+
+test {
+    useJUnitPlatform()
+}

@@ -1,0 +1,11 @@
+group = 'com.ckontur.pkr.websocket'
+version = '1.0.0'
+
+dependencies {
+    implementation project(':web-common'),
+        'org.springframework.boot:spring-boot-starter-websocket'
+}
+
+test {
+    useJUnitPlatform()
+}

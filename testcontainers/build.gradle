@@ -1,0 +1,15 @@
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-test',
+        'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.1',
+        'org.testng:testng:7.4.0',
+        'org.testcontainers:testcontainers:1.15.3',
+        'org.testcontainers:postgresql:1.15.3'
+}
+
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
