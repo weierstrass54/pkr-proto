@@ -6,8 +6,6 @@ group 'com.ckontur.pkr.gstreamer'
 version '1.0.0'
 
 dependencies {
-    /*
     implementation 'net.java.dev.jna:jna:4.2.2',
-        'org.freedesktop.gstreamer:gst1-java-core:1.2.0'
-     */
+       'org.freedesktop.gstreamer:gst1-java-core:1.4.0'
 }
