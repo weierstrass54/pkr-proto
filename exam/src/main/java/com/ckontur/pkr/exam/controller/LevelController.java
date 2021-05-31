@@ -1,4 +1,4 @@
-package com.ckontur.pkr.core.controller;
+package com.ckontur.pkr.exam.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotFoundException;

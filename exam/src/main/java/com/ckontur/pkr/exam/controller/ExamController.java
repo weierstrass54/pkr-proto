@@ -52,8 +52,25 @@ public class ExamController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Exam change(Long id, ExamRequests.ChangeExam exam) {
+    public Exam change(@PathVariable("id") Long id, ExamRequests.ChangeExam exam) {
         return examRepository.updateById(id, exam)
+            .orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден."));
+    }
+
+    //@PostMapping
+    //addQuestion
+
+    @PostMapping("/{id}/addQuestions")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
+    public Exam addQuestionByIds(@PathVariable("id") Long id) {
+        return examRepository.addQuestionByIds()
+            .orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден."));
+    }
+
+    @PostMapping("/{id}/removeQuestions")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
+    public Exam addQuestionByIds(@PathVariable("id") Long id) {
+        return examRepository.removeQuestionByIds()
             .orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден."));
     }
 

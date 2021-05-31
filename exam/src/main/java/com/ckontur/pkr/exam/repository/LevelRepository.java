@@ -1,4 +1,4 @@
-package com.ckontur.pkr.core.repository;
+package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.core.model.Level;
 import lombok.RequiredArgsConstructor;

@@ -16,6 +16,7 @@ public class Exam {
     private final int percentPassed;
     private final boolean skippable;
     private final boolean previousable;
+    private final boolean isPublished;
     private final List<Question> questions;
 
     public int getQuestionCount() {

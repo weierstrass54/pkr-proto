@@ -14,6 +14,14 @@ import java.util.Optional;
 public class ExamRequests {
     @Data
     public static class CreateExam {
+        @NotNull(message = "Поле qualificationId должно быть непустым.")
+        @Min(value = 1, message = "Идентификатор квалификации не может быть меньше 1.")
+        private int qualificationId;
+
+        @NotNull(message = "Поле levelId должно быть непустым.")
+        @Min(value = 1, message = "Идентификатор уровня не может быть меньше 1.")
+        private int levelId;
+
         @NotNull(message = "Поле duration должно быть непустым.")
         @Min(value = 10, message = "Длительность экзамена не может быть меньше 10 минут.")
         private int duration;
@@ -32,12 +40,14 @@ public class ExamRequests {
 
         @NotNull(message = "Поле previousable не указано.")
         private boolean previousable;
-
-        @NotEmpty(message = "Поле questionIds должно быть непустым.")
-        private List<Long> questionIds;
+        private Boolean isPublished;
 
         public Duration getDuration() {
             return Duration.ofMinutes(duration);
+        }
+
+        public Boolean isPublished() {
+            return Optional.ofNullable(isPublished).orElse(false);
         }
     }
 
@@ -55,7 +65,7 @@ public class ExamRequests {
         private Integer percentPassed;
         private Boolean skippable;
         private Boolean previousable;
-        private List<Long> questionIds;
+        private Boolean isPublished;
 
         public Optional<Duration> getDuration() {
             return Optional.ofNullable(duration).map(Duration::ofMinutes);
