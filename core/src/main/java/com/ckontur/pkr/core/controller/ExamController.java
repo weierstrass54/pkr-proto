@@ -2,7 +2,6 @@ package com.ckontur.pkr.core.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotFoundException;
-import com.ckontur.pkr.core.model.Exam;
 import com.ckontur.pkr.core.repository.ExamRepository;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;

@@ -2,9 +2,9 @@ package com.ckontur.pkr.exam.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotFoundException;
-import com.ckontur.pkr.core.model.Qualification;
-import com.ckontur.pkr.core.repository.QualificationRepository;
-import com.ckontur.pkr.core.web.CreateOrUpdateByNameRequest;
+import com.ckontur.pkr.exam.model.Qualification;
+import com.ckontur.pkr.exam.repository.QualificationRepository;
+import com.ckontur.pkr.exam.web.CreateOrUpdateByNameRequest;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;

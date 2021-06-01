@@ -8,7 +8,6 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,7 +44,6 @@ public class OptionRepository {
         );
     }
 
-    @Transactional
     public Optional<Option> create(Long questionId, QuestionRequests.CreateOption option) {
         return jdbcTemplate.getJdbcTemplate().query(
             "INSERT INTO options(question_id, type, text) VALUES (?, ?, ?) RETURNING *",
@@ -53,10 +51,9 @@ public class OptionRepository {
         ).stream().findAny();
     }
 
-    @Transactional
-    public List<Option> deleteByQuestionId(Long questionId) {
-        return jdbcTemplate.getJdbcTemplate().query(
-            "DELETE FROM options WHERE question_id = ?", OptionMapper.INSTANCE, questionId
+    public void deleteByQuestionId(Long questionId) {
+        jdbcTemplate.getJdbcTemplate().query(
+            "DELETE FROM options WHERE question_id = ? RETURNING *", OptionMapper.INSTANCE, questionId
         );
     }
 

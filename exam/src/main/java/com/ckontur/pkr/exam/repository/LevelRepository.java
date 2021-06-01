@@ -1,6 +1,6 @@
 package com.ckontur.pkr.exam.repository;
 
-import com.ckontur.pkr.core.model.Level;
+import com.ckontur.pkr.exam.model.Level;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

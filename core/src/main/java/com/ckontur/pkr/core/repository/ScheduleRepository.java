@@ -1,8 +1,6 @@
 package com.ckontur.pkr.core.repository;
 
-import com.ckontur.pkr.common.utils.LocalDateTimeRange;
 import com.ckontur.pkr.common.utils.SqlUtils;
-import com.ckontur.pkr.core.model.Schedule;
 import com.ckontur.pkr.core.web.ScheduleRequests;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;

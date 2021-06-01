@@ -1,7 +1,5 @@
 package com.ckontur.pkr.core.service;
 
-import com.ckontur.pkr.common.utils.LocalDateTimeRange;
-import com.ckontur.pkr.core.model.Schedule;
 import com.ckontur.pkr.core.repository.ScheduleRepository;
 import com.ckontur.pkr.core.web.ScheduleRequests;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

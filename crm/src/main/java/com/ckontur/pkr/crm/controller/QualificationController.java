@@ -2,7 +2,6 @@ package com.ckontur.pkr.crm.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotFoundException;
-import com.ckontur.pkr.crm.model.Qualification;
 import com.ckontur.pkr.crm.repository.QualificationRepository;
 import com.ckontur.pkr.crm.web.CreateOrUpdateByNameRequest;
 import io.swagger.annotations.Api;

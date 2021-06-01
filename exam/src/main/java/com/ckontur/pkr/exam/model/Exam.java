@@ -9,6 +9,7 @@ import java.util.List;
 @Getter
 @RequiredArgsConstructor
 public class Exam {
+    private final int id;
     private final String qualification;
     private final String level;
     private final Duration duration;

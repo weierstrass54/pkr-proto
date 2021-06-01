@@ -81,7 +81,7 @@ public class QuestionRepository {
     private Optional<Pair<Long, List<Long>>> createQuestionAndOptions(QuestionRequests.CreateQuestion question) {
         return Optional.ofNullable(
             parametrizedJdbcTemplate.getJdbcTemplate().queryForObject(
-                "INSERT INTO questions(type, text) VALUES (?, ?)", Long.class,
+                "INSERT INTO questions(type, text) VALUES (?, ?) RETURNING id", Long.class,
                 question.getType().getValue(), question.getText())
         ).map(questionId -> {
             List<Long> optionIds = question.getOptions().stream()

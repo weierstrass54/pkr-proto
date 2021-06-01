@@ -9,6 +9,7 @@ import com.ckontur.pkr.exam.web.ExamRequests;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -31,12 +32,6 @@ public class ExamController {
             .orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден."));
     }
 
-    @GetMapping("/list")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Exam getAll() {
-        throw new NotImplementedYetException();
-    }
-
     @GetMapping("/")
     @PreAuthorize("hasAuthority('EXAMINEE')")
     public Exam getByExaminee(@AuthenticationPrincipal Principal principal) {
@@ -45,32 +40,34 @@ public class ExamController {
 
     @PostMapping("/")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Exam create(@Valid @RequestBody ExamRequests.CreateExam exam) {
+    public Exam create(@Valid @RequestBody ExamRequests.CreateExam exam) throws Throwable {
         return examRepository.create(exam)
-            .orElseThrow(() -> new CreateEntityException("Не удалось создать экзамен."));
+            .map(e -> e.orElseThrow(() -> new CreateEntityException("Не удалось создать экзамен.")))
+            .orElseThrow(t -> t instanceof DataIntegrityViolationException ?
+                new IllegalArgumentException("Неверный параметр qualificationId или levelId.") : t);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Exam change(@PathVariable("id") Long id, ExamRequests.ChangeExam exam) {
+    public Exam change(@PathVariable("id") Long id, ExamRequests.ChangeExam exam) throws Throwable {
         return examRepository.updateById(id, exam)
-            .orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден."));
+            .map(e -> e.orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден.")))
+            .orElseThrow(t -> t instanceof DataIntegrityViolationException ?
+                new IllegalArgumentException("Неверный параметр qualificationId или levelId.") : t);
     }
-
-    //@PostMapping
-    //addQuestion
 
     @PostMapping("/{id}/addQuestions")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Exam addQuestionByIds(@PathVariable("id") Long id) {
-        return examRepository.addQuestionByIds()
-            .orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден."));
+    public Exam addQuestionByIds(@PathVariable("id") Long id, @Valid @RequestBody ExamRequests.ExamQuestions examQuestions) throws Throwable {
+        return examRepository.addQuestionsByIds(id, examQuestions.getQuestionIds())
+            .orElseThrow(t -> t instanceof DataIntegrityViolationException ?
+                new NotFoundException("Экзамен " + id + " не найден или не найден один из указанных вопросов.") : t);
     }
 
     @PostMapping("/{id}/removeQuestions")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Exam addQuestionByIds(@PathVariable("id") Long id) {
-        return examRepository.removeQuestionByIds()
+    public Exam removeQuestionByIds(@PathVariable("id") Long id, @Valid @RequestBody ExamRequests.ExamQuestions examQuestions) {
+        return examRepository.removeQuestionsByIds(id, examQuestions.getQuestionIds())
             .orElseThrow(() -> new NotFoundException("Экзамен " + id + " не найден."));
     }
 

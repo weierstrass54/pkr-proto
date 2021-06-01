@@ -35,17 +35,20 @@ public class ExamRequests {
         @Max(value = 100, message = "Процент порога сдачи экзамена не может быть больше 100.")
         private int percentPassed;
 
-        @NotNull(message = "Поле skippable не указано.")
-        private boolean skippable;
-
-        @NotNull(message = "Поле previousable не указано.")
-        private boolean previousable;
+        private Boolean skippable;
+        private Boolean previousable;
         private Boolean isPublished;
 
         public Duration getDuration() {
             return Duration.ofMinutes(duration);
         }
 
+        public Boolean isSkippable() {
+            return Optional.ofNullable(skippable).orElse(true);
+        }
+        public Boolean isPreviousable() {
+            return Optional.ofNullable(previousable).orElse(true);
+        }
         public Boolean isPublished() {
             return Optional.ofNullable(isPublished).orElse(false);
         }
@@ -54,6 +57,12 @@ public class ExamRequests {
     @Data
     @AtLeastOneNotEmpty
     public static class ChangeExam {
+        @Min(value = 1, message = "Идентификатор квалификации не может быть меньше 1.")
+        private Integer qualificationId;
+
+        @Min(value = 1, message = "Идентификатор уровня не может быть меньше 1.")
+        private Integer levelId;
+
         @Min(value = 10, message = "Длительность экзамена не может быть меньше 10 минут.")
         private Integer duration;
 
@@ -70,5 +79,11 @@ public class ExamRequests {
         public Optional<Duration> getDuration() {
             return Optional.ofNullable(duration).map(Duration::ofMinutes);
         }
+    }
+
+    @Data
+    public static class ExamQuestions {
+        @NotEmpty(message = "Поле questionIds должно быть непустым.")
+        private List<Long> questionIds;
     }
 }

@@ -38,7 +38,7 @@ public class QualificationRepository {
     }
 
     public Optional<Qualification> deleteById(Long id) {
-        return jdbcTemplate.query("DELETE FROM qualifications WHERE id = ?", QualificationMapper.INSTANCE, id)
+        return jdbcTemplate.query("DELETE FROM qualifications WHERE id = ? RETURNING *", QualificationMapper.INSTANCE, id)
             .stream().findAny();
     }
 

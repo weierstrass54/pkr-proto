@@ -1,13 +1,10 @@
 package com.ckontur.pkr.core.controller;
 
-import com.ckontur.pkr.common.utils.LocalDateTimeRange;
-import com.ckontur.pkr.core.model.Schedule;
 import com.ckontur.pkr.core.service.ScheduleService;
 import com.ckontur.pkr.core.web.ScheduleRequests;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +12,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import java.time.Duration;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Api(tags = {"Расписание экзаменов"})
