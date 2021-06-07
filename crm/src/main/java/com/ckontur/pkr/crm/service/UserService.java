@@ -1,7 +1,7 @@
 package com.ckontur.pkr.crm.service;
 
+import com.ckontur.pkr.common.model.Page;
 import com.ckontur.pkr.crm.model.CrmUser;
-import com.ckontur.pkr.crm.model.Page;
 import com.ckontur.pkr.crm.model.PageRequest;
 import com.ckontur.pkr.crm.repository.AuthRepository;
 import com.ckontur.pkr.crm.repository.SearchUserRepository;
@@ -47,5 +47,4 @@ public class UserService {
         return authRepository.deleteById(id)
             .flatMap(userRepository::delete);
     }
-
 }

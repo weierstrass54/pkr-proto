@@ -1,33 +1,50 @@
 package com.ckontur.pkr.crm.service;
 
-import com.ckontur.pkr.common.exception.InvalidArgumentException;
-import com.ckontur.pkr.common.utils.LocalDateTimeRange;
+import com.ckontur.pkr.crm.model.Exam;
 import com.ckontur.pkr.crm.model.Schedule;
+import com.ckontur.pkr.crm.repository.ExamRepository;
 import com.ckontur.pkr.crm.repository.ScheduleRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
+    private final ExamRepository examRepository;
 
     public List<Schedule> getAllByAssessmentId(Long assessmentId) {
-        return scheduleRepository.getAllByAssessmentId(assessmentId);
+        List<Long> examIds = examRepository.findAll().stream().map(Exam::getId).collect(Collectors.toList());
+        return scheduleRepository.findAllByAssessmentId(assessmentId).stream()
+            .filter(schedule -> examIds.contains(schedule.getExamId()))
+            .collect(Collectors.toList());
     }
 
-    public List<Schedule> getAllByAssessmentId(Long assessmentId, Duration duration) {
-        return scheduleRepository.getAllByAssessmentId(assessmentId, duration);
+    // TODO: add schedule
+
+    public List<Schedule> deleteAllByAssessmentIdAndExamId(Long assessmentId, Long examId) {
+        return scheduleRepository.deleteAllByAssessmentIdAndExamId(assessmentId, examId);
     }
 
-    public List<Schedule> append(Map<Long, List<LocalDateTimeRange>> schedule) {
+    public Optional<Schedule> deleteById(Long id) {
+        return scheduleRepository.deleteById(id);
+    }
+
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void clear() {
+        scheduleRepository.deleteExpired();
+        scheduleRepository.deleteAllExceptIds(
+            examRepository.findAll().stream().map(Exam::getId).collect(Collectors.toList())
+        );
+    }
+
+    /*
+    public List<Schedule> append(Map<Long, List<LocalDateTimeInterval>> schedule) {
         LocalDateTime now = LocalDateTime.now();
         return Optional.of(
             schedule.values().stream()
@@ -40,12 +57,9 @@ public class ScheduleService {
     }
 
     @Transactional
-    public List<Schedule> overwrite(Map<Long, List<LocalDateTimeRange>> schedule) {
+    public List<Schedule> overwrite(Map<Long, List<LocalDateTimeInterval>> schedule) {
         scheduleRepository.deleteAllNonExpired();
         return append(schedule);
     }
-
-    public List<Schedule> deleteByAssessmentId(Long assessmentId) {
-        return scheduleRepository.deleteByAssessmentId(assessmentId);
-    }
+     */
 }

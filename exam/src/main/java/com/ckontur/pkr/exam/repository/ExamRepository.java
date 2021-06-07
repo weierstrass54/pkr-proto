@@ -1,6 +1,7 @@
 package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.common.utils.Try;
+import com.ckontur.pkr.exam.model.DetailedExam;
 import com.ckontur.pkr.exam.model.Exam;
 import com.ckontur.pkr.exam.model.Question;
 import com.ckontur.pkr.exam.web.ExamRequests;
@@ -23,8 +24,17 @@ public class ExamRepository {
     private final JdbcTemplate jdbcTemplate;
     private final QuestionRepository questionRepository;
 
+    public List<Exam> findAll() {
+        return jdbcTemplate.query("SELECT * FROM exams", ExamMapper.INSTANCE);
+    }
+
+    public List<Exam> findAllByQualificationAndLevel(Long qualificationId, Long levelId) {
+        return jdbcTemplate.query("SELECT * FROM exams WHERE qualification_id = ? AND level_id = ?",
+            ExamMapper.INSTANCE, qualificationId, levelId);
+    }
+
     @Transactional
-    public Optional<Exam> findById(Long id) {
+    public Optional<DetailedExam> findById(Long id) {
         List<Long> questionIds = jdbcTemplate.queryForList(
             "SELECT question_id FROM exam_questions WHERE exam_id = ?", Long.class, id
         );
@@ -36,12 +46,12 @@ public class ExamRepository {
             "JOIN qualifications q ON e.qualification_id = q.id " +
             "JOIN levels l ON e.level_id = l.id" +
             "WHERE e.id = ?";
-        return jdbcTemplate.query(query, new ExamMapper(questions), id)
+        return jdbcTemplate.query(query, new DetailedExamMapper(questions), id)
             .stream().findAny();
     }
 
     @Transactional
-    public Try<Optional<Exam>> create(ExamRequests.CreateExam exam) {
+    public Try<Optional<DetailedExam>> create(ExamRequests.CreateExam exam) {
         final String query = "INSERT INTO exams(qualification_id, level_id, duration, points_per_correct, " +
             "percent_passed, skippable, previousable, is_published) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
         return Try.of(() -> jdbcTemplate.queryForObject(query, Long.class, exam.getQualificationId(), exam.getLevelId(),
@@ -51,7 +61,7 @@ public class ExamRepository {
     }
 
     @Transactional
-    public Try<Optional<Exam>> updateById(Long id, ExamRequests.ChangeExam exam) {
+    public Try<Optional<DetailedExam>> updateById(Long id, ExamRequests.ChangeExam exam) {
         return Try.of(() ->
             jdbcTemplate.update("UPDATE exams SET " +
                 "qualification_id = COALESCE(?, qualification_id), " +
@@ -69,7 +79,7 @@ public class ExamRepository {
     }
 
     @Transactional
-    public Try<Exam> addQuestionsByIds(Long id, List<Long> questionIds) {
+    public Try<DetailedExam> addQuestionsByIds(Long id, List<Long> questionIds) {
         final String query = "INSERT INTO exam_questions(exam_id, question_id) VALUES (?, ?)";
         return Try.of(
             questionIds.stream().map(questionId ->
@@ -79,7 +89,7 @@ public class ExamRepository {
     }
 
     @Transactional
-    public Optional<Exam> removeQuestionsByIds(Long id, List<Long> questionIds) {
+    public Optional<DetailedExam> removeQuestionsByIds(Long id, List<Long> questionIds) {
         questionIds.forEach(questionId ->
             jdbcTemplate.update("DELETE FROM exam_questions WHERE exam_id = ? AND question_id = ?", id, questionId)
         );
@@ -87,21 +97,40 @@ public class ExamRepository {
     }
 
     @Transactional
-    public Optional<Exam> deleteById(Long id) {
-        return findById(id).map(exam -> {
+    public Optional<DetailedExam> deleteById(Long id) {
+        return findById(id).map(detailedExam -> {
             jdbcTemplate.update("DELETE FROM exam_questions WHERE exam_id = ?", id);
             jdbcTemplate.update("DELETE FROM exams WHERE id = ?", id);
-            return exam;
+            return detailedExam;
         });
     }
 
-    @RequiredArgsConstructor
     private static class ExamMapper implements RowMapper<Exam> {
-        private final List<Question> questions;
+        private static final ExamMapper INSTANCE = new ExamMapper();
 
         @Override
         public Exam mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new Exam(
+                rs.getInt("id"),
+                rs.getString("qualification"),
+                rs.getString("level"),
+                Duration.ofMinutes(rs.getLong("duration")),
+                rs.getInt("points_per_correct"),
+                rs.getInt("percent_passed"),
+                rs.getBoolean("skippable"),
+                rs.getBoolean("previousable"),
+                rs.getBoolean("is_published")
+            );
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static class DetailedExamMapper implements RowMapper<DetailedExam> {
+        private final List<Question> questions;
+
+        @Override
+        public DetailedExam mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new DetailedExam(
                 rs.getInt("id"),
                 rs.getString("qualification"),
                 rs.getString("level"),

@@ -1,7 +1,7 @@
 package com.ckontur.pkr.crm.repository;
 
+import com.ckontur.pkr.common.model.Page;
 import com.ckontur.pkr.crm.model.CrmUser;
-import com.ckontur.pkr.crm.model.Page;
 import com.ckontur.pkr.crm.model.PageRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -9,7 +9,7 @@ import com.ckontur.pkr.crm.web.UserRequests;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
@@ -24,8 +24,8 @@ public class AuthRepository {
     private final WebClient webClient;
 
     @Autowired
-    public AuthRepository(WebClient.Builder webClientBuilder, @Value("${pkr.services.auth.url}") String authUrl) {
-        this.webClient = webClientBuilder.baseUrl(authUrl).build();
+    public AuthRepository(WebClient.Builder webClientBuilder, ReactorLoadBalancerExchangeFilterFunction loadBalancerFilter) {
+        this.webClient = webClientBuilder.baseUrl("http://auth/").filter(loadBalancerFilter).build();
     }
 
     public Optional<User> getById(Long id) {
@@ -42,13 +42,13 @@ public class AuthRepository {
             .blockOptional();
     }
 
-    public Optional<User> create(UserRequests.CreateUser usedData) {
+    public Optional<User> create(UserRequests.CreateUser userData) {
         String jwtToken = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
         return webClient.post()
             .uri("/user")
             .header("Authorization", "Bearer " + jwtToken)
             .body(Mono.just(new AuthUserRequest(
-                usedData.getLogin(), usedData.getPassword(), Set.of(usedData.getAuthority())
+                userData.getLogin(), userData.getPassword(), Set.of(userData.getAuthority())
             )), AuthUserRequest.class)
             .retrieve()
             .onStatus(httpStatus -> httpStatus == HttpStatus.FORBIDDEN,

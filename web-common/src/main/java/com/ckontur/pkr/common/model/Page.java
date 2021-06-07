@@ -1,4 +1,4 @@
-package com.ckontur.pkr.crm.model;
+package com.ckontur.pkr.common.model;
 
 import lombok.AccessLevel;
 import lombok.Getter;

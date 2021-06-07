@@ -33,7 +33,7 @@ public class SqlUtils {
             .orElse(null);
     }
 
-    public static LocalDateTimeRange localDateTimeRangeOf(Object object) throws SQLException {
+    public static Interval<LocalDateTime> localDateTimeIntervalOf(Object object) throws SQLException {
         String view = String.valueOf(object);
         List<LocalDateTime> values = Stream.of(view.substring(1, view.length() - 1).split(","))
             .map(v -> v.replaceAll("\"", ""))
@@ -42,14 +42,14 @@ public class SqlUtils {
         if (values.size() != 2) {
             throw new SQLException("Интервал невалиден.");
         }
-        return new LocalDateTimeRange(values.get(0), values.get(1), view.startsWith("["), view.endsWith("]"));
+        return Interval.of(values.get(0), values.get(1), view.startsWith("["), view.endsWith("]"));
     }
 
-    public static Object localDateTimeRange(LocalDateTimeRange localDateTimeRange) {
-        return (localDateTimeRange.isIncludeFrom() ? '[' : '(') +
-            Optional.ofNullable(localDateTimeRange.getFrom()).map(d -> d.format(DTF)).orElse(INFINITY) +
-            Optional.ofNullable(localDateTimeRange.getTo()).map(d -> d.format(DTF)).orElse(INFINITY) +
-            (localDateTimeRange.isIncludeTo() ? ']' : ')');
+    public static Object localDateTimeRange(Interval<LocalDateTime> localDateTimeInterval) {
+        return (localDateTimeInterval.isIncludeStart() ? '[' : '(') +
+            Optional.ofNullable(localDateTimeInterval.getStart()).map(d -> d.format(DTF)).orElse(INFINITY) +
+            Optional.ofNullable(localDateTimeInterval.getFinish()).map(d -> d.format(DTF)).orElse(INFINITY) +
+            (localDateTimeInterval.isIncludeFinish() ? ']' : ')');
     }
 
     private static <T> Stream<T> streamOf(Array value, Function<String, T> mapper) throws SQLException {

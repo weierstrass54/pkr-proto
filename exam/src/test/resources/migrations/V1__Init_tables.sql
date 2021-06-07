@@ -1,0 +1,59 @@
+CREATE TABLE regions(
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE qualifications(
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE levels(
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+
+CREATE TABLE exams(
+  id BIGSERIAL PRIMARY KEY,
+  qualification_id BIGINT NOT NULL REFERENCES qualifications(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  level_id BIGINT NOT NULL REFERENCES levels(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+  duration INTEGER NOT NULL DEFAULT 60 CHECK (duration > 10),
+  points_per_correct INTEGER NOT NULL DEFAULT 1,
+  percent_passed INTEGER NOT DEFAULT 100 NULL CHECK (percent_passed > 0 AND percent_passed <= 100),
+  skippable BOOLEAN NOT NULL DEFAULT TRUE,
+  previousable BOOLEAN NOT NULL DEFAULT TRUE,
+  is_published BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE questions(
+    id BIGSERIAL PRIMARY KEY,
+    type INTEGER NOT NULL,
+    text TEXT NOT NULL
+);
+
+CREATE TABLE exam_questions(
+    exam_id BIGINT NOT NULL REFERENCES exams(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    question_id BIGINT NOT NULL REFERENCES questions(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    UNIQUE(exam_id, question_id)
+);
+
+CREATE TABLE options(
+    id BIGSERIAL PRIMARY KEY,
+    question_id BIGINT NOT NULL REFERENCES questions(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    type INTEGER NOT NULL,
+    text TEXT NOT NULL
+);
+
+CREATE TABLE answers_list(
+    option_id BIGINT NOT NULL REFERENCES options(id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE answers_sequence(
+    option_id BIGINT NOT NULL REFERENCES options(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    ordinal INTEGER NOT NULL
+);
+
+CREATE TABLE answers_matches(
+    option_id_left BIGINT NOT NULL REFERENCES options(id) ON UPDATE CASCADE ON DELETE RESTRICT,
+    option_id_right BIGINT NOT NULL REFERENCES options(id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
