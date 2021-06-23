@@ -7,11 +7,11 @@ import com.ckontur.pkr.common.model.Authority;
 import com.ckontur.pkr.common.model.User;
 import com.ckontur.pkr.common.utils.DateUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Optional;
@@ -40,12 +40,7 @@ public class JwtProvider {
     }
 
     private <T extends User> String asClaim(T user) {
-        try {
-            return objectMapper.writeValueAsString(user);
-        }
-        catch (IOException e) {
-            return "";
-        }
+        return Try.of(() -> objectMapper.writeValueAsString(user)).getOrElse("");
     }
 
     private <T extends User> Optional<Date> getExpiredAt(T user) {

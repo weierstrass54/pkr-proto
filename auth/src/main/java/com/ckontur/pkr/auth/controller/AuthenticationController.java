@@ -24,7 +24,7 @@ public class AuthenticationController {
     @PostMapping("/authenticate")
     public String authenticate(@Valid @RequestBody AuthenticateRequest request) {
         return authenticateService.authenticate(request.getLogin(), request.getPassword())
-            .orElseThrow(() -> new AuthenticationFailedException("Пара логин/пароль неверна."));
+            .getOrElseThrow(() -> new AuthenticationFailedException("Пара логин/пароль неверна."));
     }
 
 }
