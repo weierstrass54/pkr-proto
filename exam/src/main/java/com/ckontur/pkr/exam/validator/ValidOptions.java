@@ -1,7 +1,7 @@
 package com.ckontur.pkr.exam.validator;
 
-import com.ckontur.pkr.exam.model.Option;
-import com.ckontur.pkr.exam.model.Question;
+import com.ckontur.pkr.exam.model.question.Option;
+import com.ckontur.pkr.exam.model.question.Question;
 import io.vavr.control.Try;
 import org.springframework.beans.BeanUtils;
 

@@ -8,12 +8,12 @@ import com.ckontur.pkr.exam.repository.QualificationRepository;
 import com.ckontur.pkr.exam.web.CreateOrUpdateByNameRequest;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.annotations.Api;
+import io.vavr.collection.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 @Api(tags = {"Квалификации ПКР"})
 @RestController

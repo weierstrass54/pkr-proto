@@ -1,9 +1,7 @@
-package com.ckontur.pkr.exam.model;
+package com.ckontur.pkr.exam.model.question;
 
+import io.vavr.collection.List;
 import lombok.Getter;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 public class MatchQuestion extends Question {
@@ -12,8 +10,8 @@ public class MatchQuestion extends Question {
 
     public MatchQuestion(Long id, Type type, String text, List<Option> options) {
         super(id, type, text);
-        this.leftOptions = options.stream().filter(o -> o.getType() == Option.Type.LEFT).collect(Collectors.toList());
-        this.rightOptions = options.stream().filter(o -> o.getType() == Option.Type.RIGHT).collect(Collectors.toList());
+        this.leftOptions = options.filter(o -> o.getType() == Option.Type.LEFT);
+        this.rightOptions = options.filter(o -> o.getType() == Option.Type.RIGHT);
     }
 
     @Override

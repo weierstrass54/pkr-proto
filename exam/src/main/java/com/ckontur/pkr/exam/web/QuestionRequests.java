@@ -1,14 +1,14 @@
 package com.ckontur.pkr.exam.web;
 
-import com.ckontur.pkr.exam.model.Option;
-import com.ckontur.pkr.exam.model.Question;
+import com.ckontur.pkr.exam.model.question.Option;
+import com.ckontur.pkr.exam.model.question.Question;
 import com.ckontur.pkr.exam.validator.ValidOptions;
+import io.vavr.collection.List;
+import io.vavr.collection.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotEmpty;
-import java.util.List;
-import java.util.Map;
 
 public class QuestionRequests {
 

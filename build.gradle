@@ -45,7 +45,8 @@ configure(subprojects.findAll {it.name != 'gstreamer'}) {
             'org.bouncycastle:bcprov-jdk15on:1.68',
             'io.springfox:springfox-boot-starter:3.0.0',
             'io.springfox:springfox-swagger-ui:3.0.0',
-            'org.hibernate:hibernate-validator:6.1.6.Final'
+            'org.hibernate:hibernate-validator:6.1.6.Final',
+            'io.vavr:vavr-jackson:0.10.3'
 
         testImplementation 'org.springframework.boot:spring-boot-starter-test',
             'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.11.1',

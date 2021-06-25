@@ -1,4 +1,4 @@
-package com.ckontur.pkr.exam.model;
+package com.ckontur.pkr.exam.model.question;
 
 import com.ckontur.pkr.common.exception.InvalidEnumException;
 import com.fasterxml.jackson.annotation.JsonProperty;

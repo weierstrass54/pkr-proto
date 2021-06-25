@@ -2,12 +2,15 @@ package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotImplementedYetException;
-import com.ckontur.pkr.exam.model.ChoiceQuestion;
-import com.ckontur.pkr.exam.model.MatchQuestion;
-import com.ckontur.pkr.exam.model.Option;
-import com.ckontur.pkr.exam.model.Question;
+import com.ckontur.pkr.exam.model.question.ChoiceQuestion;
+import com.ckontur.pkr.exam.model.question.MatchQuestion;
+import com.ckontur.pkr.exam.model.question.Option;
+import com.ckontur.pkr.exam.model.question.Question;
 import com.ckontur.pkr.exam.web.QuestionRequests;
 import io.vavr.Tuple2;
+import io.vavr.collection.HashMap;
+import io.vavr.collection.List;
+import io.vavr.collection.Map;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -18,10 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$None;
@@ -38,7 +37,7 @@ public class QuestionRepository {
         List<Option> options = optionRepository.findAllByQuestionId(id);
         return io.vavr.control.Option.ofOptional(
             parametrizedJdbcTemplate.getJdbcTemplate().query("SELECT * FROM questions WHERE id = ?",
-                new QuestionMapper(Map.of(id, options)), id)
+                new QuestionMapper(HashMap.of(id, options)), id)
             .stream().findAny()
         );
     }
@@ -49,18 +48,21 @@ public class QuestionRepository {
 
     public List<Question> findAllByIds(List<Long> ids) {
         Map<Long, List<Option>> options = optionRepository.findAllByQuestionIds(ids);
-        return parametrizedJdbcTemplate.query(
-            "SELECT * FROM questions WHERE id IN (:ids)",
+        return List.ofAll(
+            parametrizedJdbcTemplate.query(
+                "SELECT * FROM questions WHERE id IN (:ids)",
                 new MapSqlParameterSource("ids", ids),
-                new QuestionMapper(options));
+                new QuestionMapper(options)
+            )
+        );
     }
 
     @Transactional
     public Try<Question> create(QuestionRequests.CreateSingleOrMultipleQuestion question) {
         return createQuestionAndOptions(question)
             .filter(objects -> objects._2.size() == question.getOptions().size())
-            .peek(p -> answerRepository.createSingleOrMultiple(p._2, question.getAnswers()))
-            .flatMap(p -> Match(findById(p._1)).of(
+            .flatMap(p -> answerRepository.createSingleOrMultiple(p._2, question.getAnswers()).map(__ -> p._1))
+            .flatMap(id -> Match(findById(id)).of(
                 Case($Some($()), Try::success),
                 Case($None(), () -> Try.failure(new CreateEntityException("Запрос создания вопроса не вернул результата.")))
             ));
@@ -70,8 +72,8 @@ public class QuestionRepository {
     public Try<Question> create(QuestionRequests.CreateSequenceQuestion question) {
         return createQuestionAndOptions(question)
             .filter(p -> p._2.size() == question.getOptions().size())
-            .peek(p -> answerRepository.createSequence(p._2, question.getAnswers()))
-            .flatMap(p -> Match(findById(p._1)).of(
+            .flatMap(p -> answerRepository.createSequence(p._2, question.getAnswers()).map(__ -> p._1))
+            .flatMap(id -> Match(findById(id)).of(
                 Case($Some($()), Try::success),
                 Case($None(), () -> Try.failure(new CreateEntityException("Запрос создания вопроса не вернул результата.")))
             ));
@@ -81,8 +83,8 @@ public class QuestionRepository {
     public Try<Question> create(QuestionRequests.CreateMatchQuestion question) {
         return createQuestionAndOptions(question)
             .filter(p -> p._2.size() == question.getOptions().size())
-            .peek(p -> answerRepository.createMatch(p._2, question.getAnswers()))
-            .flatMap(p -> Match(findById(p._1)).of(
+            .flatMap(p -> answerRepository.createMatch(p._2, question.getAnswers()).map(__ -> p._1))
+            .flatMap(id -> Match(findById(id)).of(
                 Case($Some($()), Try::success),
                 Case($None(), () -> Try.failure(new CreateEntityException("Запрос создания вопроса не вернул результата.")))
             ));
@@ -95,8 +97,8 @@ public class QuestionRepository {
                     question.getType().getValue(), question.getText()))
         .toTry(() -> new CreateEntityException("Запрос создания вопроса не вернул результата."))
         .flatMap(questionId -> Try.sequence(
-                question.getOptions().stream().map(option -> optionRepository.create(questionId, option).map(Option::getId)).collect(Collectors.toList())
-            ).map(optionIds -> new Tuple2<>(questionId, optionIds.toJavaList()))
+                question.getOptions().map(option -> optionRepository.create(questionId, option).map(Option::getId))
+            ).map(optionIds -> new Tuple2<>(questionId, optionIds.toList()))
         );
     }
 
@@ -120,10 +122,10 @@ public class QuestionRepository {
             Question.Type type = Question.Type.of(rs.getInt("type"));
             return switch (type) {
                 case SINGLE, MULTIPLE, SEQUENCE -> new ChoiceQuestion(
-                    id, type, rs.getString("text"), options.getOrDefault(id, Collections.emptyList())
+                    id, type, rs.getString("text"), options.getOrElse(id, List.empty())
                 );
                 case MATCHING -> new MatchQuestion(
-                    id, type, rs.getString("text"), options.getOrDefault(id, Collections.emptyList())
+                    id, type, rs.getString("text"), options.getOrElse(id, List.empty())
                 );
             };
         }

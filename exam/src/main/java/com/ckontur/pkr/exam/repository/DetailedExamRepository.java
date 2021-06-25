@@ -2,8 +2,9 @@ package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.exam.model.DetailedExam;
-import com.ckontur.pkr.exam.model.Question;
+import com.ckontur.pkr.exam.model.question.Question;
 import com.ckontur.pkr.exam.web.ExamRequests;
+import io.vavr.collection.List;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
@@ -17,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$None;
@@ -33,9 +32,9 @@ public class DetailedExamRepository extends ExamRepository {
 
     @Transactional
     public Option<DetailedExam> findById(Long id) {
-        List<Long> questionIds = namedParameterJdbcTemplate.getJdbcTemplate().queryForList(
+        List<Long> questionIds = List.ofAll(namedParameterJdbcTemplate.getJdbcTemplate().queryForList(
             "SELECT question_id FROM exam_questions WHERE exam_id = ?", Long.class, id
-        );
+        ));
         List<Question> questions = questionRepository.findAllByIds(questionIds);
         final String query = "SELECT " +
             "e.id, q.name AS qualification, l.name AS level, e.duration, e.points_per_correct, e.percent_passed, " +
@@ -86,7 +85,7 @@ public class DetailedExamRepository extends ExamRepository {
     public Try<DetailedExam> addQuestionsByIds(Long id, List<Long> questionIds) {
         final String query = "INSERT INTO exam_questions(exam_id, question_id) VALUES (?, ?)";
         return Try.sequence(
-            questionIds.stream().map(qId -> Try.of(() -> namedParameterJdbcTemplate.getJdbcTemplate().update(query, id, qId))).collect(Collectors.toList())
+            questionIds.map(qId -> Try.of(() -> namedParameterJdbcTemplate.getJdbcTemplate().update(query, id, qId)))
         ).flatMap(__ -> Match(findById(id)).of(
             Case($Some($()), Try::success),
             Case($None(), () -> Try.failure(new CreateEntityException("Запрос получения экзамена вернул пустоту.")))
@@ -118,16 +117,16 @@ public class DetailedExamRepository extends ExamRepository {
         @Override
         public DetailedExam mapRow(ResultSet rs, int rowNum) throws SQLException {
             return new DetailedExam(
-                    rs.getInt("id"),
-                    rs.getString("qualification"),
-                    rs.getString("level"),
-                    Duration.ofMinutes(rs.getLong("duration")),
-                    rs.getInt("points_per_correct"),
-                    rs.getInt("percent_passed"),
-                    rs.getBoolean("skippable"),
-                    rs.getBoolean("previousable"),
-                    rs.getBoolean("is_published"),
-                    questions
+                rs.getInt("id"),
+                rs.getString("qualification"),
+                rs.getString("level"),
+                Duration.ofMinutes(rs.getLong("duration")),
+                rs.getInt("points_per_correct"),
+                rs.getInt("percent_passed"),
+                rs.getBoolean("skippable"),
+                rs.getBoolean("previousable"),
+                rs.getBoolean("is_published"),
+                questions
             );
         }
     }

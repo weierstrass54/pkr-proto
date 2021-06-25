@@ -1,6 +1,7 @@
 package com.ckontur.pkr.exam.web;
 
 import com.ckontur.pkr.common.validator.AtLeastOneNotEmpty;
+import io.vavr.collection.List;
 import io.vavr.control.Option;
 import lombok.Data;
 
@@ -9,7 +10,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
-import java.util.List;
 
 public class ExamRequests {
     @Data

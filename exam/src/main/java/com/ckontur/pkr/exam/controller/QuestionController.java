@@ -1,17 +1,17 @@
 package com.ckontur.pkr.exam.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
-import com.ckontur.pkr.exam.model.Question;
+import com.ckontur.pkr.exam.model.question.Question;
 import com.ckontur.pkr.exam.repository.QuestionRepository;
 import com.ckontur.pkr.exam.web.QuestionRequests;
 import io.micrometer.core.annotation.Timed;
 import io.swagger.annotations.Api;
+import io.vavr.collection.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.List;
 
 @Api(tags = {"Экзаменационные вопросы"})
 @RequestMapping("/question")

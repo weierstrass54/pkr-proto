@@ -1,9 +1,12 @@
 package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
-import com.ckontur.pkr.exam.model.Option;
+import com.ckontur.pkr.exam.model.question.Option;
 import com.ckontur.pkr.exam.web.QuestionRequests;
 import io.vavr.Tuple2;
+import io.vavr.collection.HashMap;
+import io.vavr.collection.List;
+import io.vavr.collection.Map;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;
@@ -14,10 +17,6 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$None;
@@ -29,23 +28,26 @@ public class OptionRepository {
     private final NamedParameterJdbcTemplate parameterJdbcTemplate;
 
     public List<Option> findAllByQuestionId(Long questionId) {
-        return parameterJdbcTemplate.getJdbcTemplate().query(
-            "SELECT * FROM options WHERE question_id = ?", OptionMapper.INSTANCE, questionId
+        return List.ofAll(
+            parameterJdbcTemplate.getJdbcTemplate().query(
+               "SELECT * FROM options WHERE question_id = ?", OptionMapper.INSTANCE, questionId
+            )
         );
     }
 
-    public Map<Long, List<Option>> findAllByQuestionIds(Collection<Long> questionIds) {
+    public Map<Long, List<Option>> findAllByQuestionIds(List<Long> questionIds) {
         return io.vavr.control.Option.of(questionIds)
             .filter(qids -> !qids.isEmpty())
-            .map(qids -> parameterJdbcTemplate.query(
-                    "SELECT * FROM options WHERE question_id IN (:ids)",
-                    new MapSqlParameterSource("ids", questionIds),
-                    (rs, rowNum) -> {
-                        Option option = OptionMapper.INSTANCE.mapRow(rs, rowNum);
-                        return new Tuple2<>(rs.getLong("question_id"), option);
-                    })
-            ).map(v -> v.stream().collect(Collectors.groupingBy(Tuple2::_1, Collectors.mapping(Tuple2::_2, Collectors.toList()))))
-            .getOrElse(Collections.emptyMap());
+            .map(qids -> List.ofAll(parameterJdbcTemplate.query(
+                "SELECT * FROM options WHERE question_id IN (:ids)",
+                new MapSqlParameterSource("ids", questionIds),
+                (rs, rowNum) -> {
+                    Option option = OptionMapper.INSTANCE.mapRow(rs, rowNum);
+                    return new Tuple2<>(rs.getLong("question_id"), option);
+                }))
+            )
+            .map(v -> v.groupBy(Tuple2::_1).mapValues(__ -> __.map(Tuple2::_2)))
+            .getOrElse(HashMap.empty());
     }
 
     public Try<Option> create(Long questionId, QuestionRequests.CreateOption option) {

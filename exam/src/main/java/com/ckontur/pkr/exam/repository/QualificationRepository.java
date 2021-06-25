@@ -2,6 +2,7 @@ package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.exam.model.Qualification;
+import io.vavr.collection.List;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$None;
@@ -23,7 +23,7 @@ public class QualificationRepository {
     private final JdbcTemplate jdbcTemplate;
 
     public List<Qualification> findAll() {
-        return jdbcTemplate.query("SELECT * FROM qualifications", QualificationMapper.INSTANCE);
+        return List.ofAll(jdbcTemplate.query("SELECT * FROM qualifications", QualificationMapper.INSTANCE));
     }
 
     public Option<Qualification> findById(Long id) {

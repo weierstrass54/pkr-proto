@@ -1,8 +1,7 @@
-package com.ckontur.pkr.exam.model;
+package com.ckontur.pkr.exam.model.question;
 
+import io.vavr.collection.List;
 import lombok.Getter;
-
-import java.util.List;
 
 @Getter
 public class ChoiceQuestion extends Question {

@@ -1,9 +1,10 @@
 package com.ckontur.pkr.exam.model;
 
+import com.ckontur.pkr.exam.model.question.Question;
+import io.vavr.collection.List;
 import lombok.Getter;
 
 import java.time.Duration;
-import java.util.List;
 
 @Getter
 public class DetailedExam extends Exam {
