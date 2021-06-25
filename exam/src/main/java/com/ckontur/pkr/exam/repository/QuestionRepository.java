@@ -2,10 +2,8 @@ package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotImplementedYetException;
-import com.ckontur.pkr.exam.model.question.ChoiceQuestion;
-import com.ckontur.pkr.exam.model.question.MatchQuestion;
 import com.ckontur.pkr.exam.model.question.Option;
-import com.ckontur.pkr.exam.model.question.Question;
+import com.ckontur.pkr.exam.model.question.*;
 import com.ckontur.pkr.exam.web.QuestionRequests;
 import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
@@ -34,6 +32,7 @@ public class QuestionRepository {
     private final AnswerRepository answerRepository;
 
     public io.vavr.control.Option<Question> findById(Long id) {
+
         List<Option> options = optionRepository.findAllByQuestionId(id);
         return io.vavr.control.Option.ofOptional(
             parametrizedJdbcTemplate.getJdbcTemplate().query("SELECT * FROM questions WHERE id = ?",
@@ -110,6 +109,40 @@ public class QuestionRepository {
             parametrizedJdbcTemplate.getJdbcTemplate().update("DELETE FROM questions WHERE id = ?", id);
             return question;
         });
+    }
+
+    @RequiredArgsConstructor
+    private static class AnsweredChoiceQuestionMapper implements RowMapper<AnsweredChoiceQuestion> {
+        private final List<Option> options;
+        private final List<Long> answers;
+
+        @Override
+        public AnsweredChoiceQuestion mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new AnsweredChoiceQuestion(
+                rs.getLong("id"),
+                Question.Type.of(rs.getInt("type")),
+                rs.getString("text"),
+                options,
+                answers
+            );
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static class AnsweredMatchQuestionMapper implements RowMapper<AnsweredMatchQuestion> {
+        private final List<Option> options;
+        private final Map<Long, Long> answers;
+
+        @Override
+        public AnsweredMatchQuestion mapRow(ResultSet rs, int rowNum) throws SQLException {
+            return new AnsweredMatchQuestion(
+                    rs.getLong("id"),
+                    Question.Type.of(rs.getInt("type")),
+                    rs.getString("text"),
+                    options,
+                    answers
+            );
+        }
     }
 
     @RequiredArgsConstructor
