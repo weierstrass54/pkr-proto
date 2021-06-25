@@ -1,6 +1,8 @@
 package com.ckontur.pkr.exam.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
+import com.ckontur.pkr.common.exception.NotFoundException;
+import com.ckontur.pkr.common.request.PageRequest;
 import com.ckontur.pkr.exam.model.question.Question;
 import com.ckontur.pkr.exam.repository.QuestionRepository;
 import com.ckontur.pkr.exam.web.QuestionRequests;
@@ -17,35 +19,42 @@ import javax.validation.Valid;
 @RequestMapping("/question")
 @RestController
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
 @Timed(value = "requests.question", percentiles = {0.75, 0.9, 0.95, 0.99})
 public class QuestionController {
     private final QuestionRepository questionRepository;
 
     @GetMapping("/list")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public List<Question> getAll() {
-        return questionRepository.findAll();
+    public List<Question> findAll(
+        @RequestParam(value = "page", required = false, defaultValue = "1") int page,
+        @RequestParam(value = "size", required = false, defaultValue = "50") int size,
+        @RequestParam(value = "sort", required = false, defaultValue = "ASC") String sort
+    ) {
+        return questionRepository.findAll(PageRequest.of(page, size, PageRequest.Direction.of(sort)));
     }
 
     @PostMapping("/singleOrMultiple")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
     public Question createSingleOrMultiple(@Valid @RequestBody QuestionRequests.CreateSingleOrMultipleQuestion question) {
        return questionRepository.create(question)
            .getOrElseThrow(t -> new CreateEntityException("Не удалось создать вопрос.", t));
     }
 
     @PostMapping("/sequence")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
     public Question createSequence(@Valid @RequestBody QuestionRequests.CreateSequenceQuestion question) {
         return questionRepository.create(question)
             .getOrElseThrow(t -> new CreateEntityException("Не удалось создать вопрос.", t));
     }
 
     @PostMapping("/match")
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
     public Question createMatch(@Valid @RequestBody QuestionRequests.CreateMatchQuestion question) {
         return questionRepository.create(question)
             .getOrElseThrow(t -> new CreateEntityException("Не удалось создать вопрос.", t));
+    }
+
+    @DeleteMapping("/{id}")
+    public Question deleteById(@PathVariable("id") Long id) {
+        return questionRepository.deleteById(id)
+            .getOrElseThrow(() -> new NotFoundException("Вопрос " + id + "не найден."));
     }
 
 }

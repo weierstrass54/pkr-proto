@@ -1,8 +1,3 @@
-CREATE TABLE regions(
-    id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL
-);
-
 CREATE TABLE qualifications(
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL

@@ -1,5 +1,8 @@
 package com.ckontur.pkr.testcontainers;
 
+import io.vavr.Tuple2;
+import io.vavr.control.Option;
+import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,7 +17,6 @@ import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 
 import java.net.URI;
-import java.util.Optional;
 
 @Slf4j
 @AutoConfigureMockMvc
@@ -25,24 +27,29 @@ public abstract class SpringBootPostgreSQLContainerTests extends AbstractTestNGS
 
     @BeforeSuite
     protected static void beforeSuite() throws Exception {
-        SpringConfig config = SpringConfig.of("application.yml");
-        URI uri = URI.create(config.getSpring().getDataSource().getUrl().substring(5));
-        if (!uri.getScheme().equals("postgresql")) {
-            throw new Exception("Database source is invalid.");
-        }
-        postgreSQLContainer = new PostgreSQLContainer<>("postgres:latest")
-            .withUsername(config.getSpring().getDataSource().getUsername())
-            .withPassword(config.getSpring().getDataSource().getPassword())
-            .withExposedPorts(uri.getPort())
-            .withDatabaseName(uri.getPath());
-        postgreSQLContainer.start();
-        log.info("PostgreSQL container has been started.");
+        postgreSQLContainer = Try.of(() -> {
+            SpringConfig config = SpringConfig.of("application.yml");
+            URI uri = URI.create(config.getSpring().getDataSource().getUrl().substring(5));
+            return new Tuple2<>(config, uri);
+        })
+        .filter(t -> t._2.getScheme().equals("postgresql"))
+        .map(t ->
+            new PostgreSQLContainer<>("postgres:latest")
+                .withUsername(t._1.getSpring().getDataSource().getUsername())
+                .withPassword(t._1.getSpring().getDataSource().getPassword())
+                .withExposedPorts(t._2.getPort())
+                .withDatabaseName(t._2.getPath())
+        )
+        .peek(PostgreSQLContainer::start)
+        .peek(__ -> log.info("PostgreSQL container has been started."))
+        .getOrElseThrow(() -> new Exception("Database source is invalid."));
     }
 
     @AfterSuite
     protected static void afterSuite() {
-        Optional.ofNullable(postgreSQLContainer).ifPresent(Startable::close);
-        log.info("PostgreSQL container has been closed.");
+        Option.of(postgreSQLContainer)
+            .peek(Startable::close)
+            .forEach(__ -> log.info("PostgreSQL container has been closed."));
     }
 
     static class SpringBootTestInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {

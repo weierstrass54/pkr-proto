@@ -16,7 +16,6 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
 
 import static io.vavr.API.*;
 import static io.vavr.Patterns.$None;
@@ -33,6 +32,20 @@ public class OptionRepository {
                "SELECT * FROM options WHERE question_id = ?", OptionMapper.INSTANCE, questionId
             )
         );
+    }
+
+    public Map<Long, List<Option>> findAllByExamIdGroupedByQuestionId(Long examId) {
+        final String query = "SELECT o.* " +
+            "FROM exam_questions eq " +
+            "JOIN questions q ON eq.question_id = q.id " +
+            "JOIN options o ON o.question_id = q.id " +
+            "WHERE eq.exam_id = ?";
+        return List.ofAll(
+            parameterJdbcTemplate.getJdbcTemplate().query(query, (rs, rowNum) -> {
+                Option option = OptionMapper.INSTANCE.mapRow(rs, rowNum);
+                return new Tuple2<>(rs.getLong("question_id"), option);
+            }, examId)
+        ).groupBy(Tuple2::_1).mapValues(__ -> __.map(Tuple2::_2));
     }
 
     public Map<Long, List<Option>> findAllByQuestionIds(List<Long> questionIds) {

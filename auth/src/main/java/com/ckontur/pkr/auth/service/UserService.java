@@ -26,7 +26,7 @@ public class UserService {
     }
 
     public Try<Option<User>> updateById(Long id, ChangeUserRequest user) {
-        String password = Option.of(user.getPassword()).map(passwordEncoder::encode).getOrElse((String)null);
+        String password = Option.of(user.getPassword()).map(passwordEncoder::encode).getOrNull();
         return userRepository.updateById(id, user.getLogin(), password, user.getAuthorities());
     }
 

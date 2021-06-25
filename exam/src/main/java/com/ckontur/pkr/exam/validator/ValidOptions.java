@@ -2,6 +2,9 @@ package com.ckontur.pkr.exam.validator;
 
 import com.ckontur.pkr.exam.model.question.Option;
 import com.ckontur.pkr.exam.model.question.Question;
+import io.vavr.collection.HashSet;
+import io.vavr.collection.List;
+import io.vavr.collection.Set;
 import io.vavr.control.Try;
 import org.springframework.beans.BeanUtils;
 
@@ -14,10 +17,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @Constraint(validatedBy = ValidOptions.ValidOptionsValidator.class)
 @Target(ElementType.TYPE)
@@ -65,23 +64,23 @@ public @interface ValidOptions {
         private List<Option> getOptions(Object value) {
             return Try.of(() -> BeanUtils.getPropertyDescriptor(value.getClass(), optionsField))
                 .map(PropertyDescriptor::getReadMethod)
-                .flatMap(rm -> Try.of(() -> ((List<?>)rm.invoke(value)).stream().map(o -> (Option) o).collect(Collectors.toList())))
-                .getOrElse(Collections.emptyList());
+                .flatMap(rm -> Try.of(() -> ((List<?>)rm.invoke(value)).map(o -> (Option) o)))
+                .getOrElse(List.empty());
         }
 
         private boolean isValidChoiceOptions(List<Option> options) {
-            return options.size() > 1 && options.stream().allMatch(
-                o -> Set.of(Option.Type.ANY, Option.Type.LIST).contains(o.getType())
-            );
+            return List.of(
+                options.size() > 1,
+                options.forAll(o -> HashSet.of(Option.Type.ANY, Option.Type.LIST).contains(o.getType()))
+            ).fold(true, (a, b) -> a && b);
         }
 
         private boolean isValidMatchOptions(List<Option> options) {
-            boolean validSizeAndTypes = options.size() >= 4 && options.stream().allMatch(
-                o -> Set.of(Option.Type.LEFT, Option.Type.RIGHT).contains(o.getType())
-            );
-            boolean validCounts = options.stream().filter(o -> o.getType() == Option.Type.LEFT).count() ==
-                options.stream().filter(o -> o.getType() == Option.Type.RIGHT).count();
-            return validSizeAndTypes && validCounts;
+            return List.of(
+                options.size() >= 4,
+                options.forAll(o -> HashSet.of(Option.Type.LEFT, Option.Type.RIGHT).contains(o.getType())),
+                options.partition(o -> o.getType() == Option.Type.LEFT).apply((a, b) -> a.size() == b.size())
+            ).fold(true, (a, b) -> a && b);
         }
     }
 }

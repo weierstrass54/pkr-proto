@@ -1,16 +1,14 @@
 package com.ckontur.pkr.common.utils;
 
-import io.vavr.collection.Stream;
+import io.vavr.collection.*;
 import io.vavr.control.Option;
+import io.vavr.control.Try;
 import lombok.experimental.UtilityClass;
 
 import java.sql.Array;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -20,29 +18,30 @@ public class SqlUtils {
     private static final DateTimeFormatter DTF = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public static <T> List<T> listOf(Array value, Function<String, T> mapper) throws SQLException {
-        return streamOf(value, mapper).collect(Collectors.toList());
+        return List.ofAll(streamOf(value, mapper));
     }
 
     public static <T> Set<T> setOf(Array value, Function<String, T> mapper) throws SQLException {
-        return streamOf(value, mapper).collect(Collectors.toSet());
+        return HashSet.ofAll(streamOf(value, mapper));
     }
 
-    public static <T> String array(Collection<T> values, Function<T, String> mapper) {
+    public static <T> String array(Traversable<T> values, Function<T, String> mapper) {
         return Option.of(values)
-            .map(v -> "{" + v.stream().map(mapper).collect(Collectors.joining(",")) + "}")
-            .getOrElse((String)null);
+            .map(v -> "{" + v.map(mapper).mkString(",") + "}")
+            .getOrNull();
     }
 
     public static Interval<LocalDateTime> localDateTimeIntervalOf(Object object) throws SQLException {
         String view = String.valueOf(object);
-        List<LocalDateTime> values = Stream.of(view.substring(1, view.length() - 1).split(","))
-            .map(v -> v.replaceAll("\"", ""))
-            .map(v -> v.isEmpty() || v.equals(INFINITY) ? null : LocalDateTime.parse(v.substring(0, 19), DTF))
-            .collect(Collectors.toList());
-        if (values.size() != 2) {
-            throw new SQLException("Интервал невалиден.");
-        }
-        return Interval.of(values.get(0), values.get(1), view.startsWith("["), view.endsWith("]"));
+        return Try.of(() ->
+            Stream.of(view.substring(1, view.length() - 1).split(","))
+                .map(v -> v.replaceAll("\"", ""))
+                .map(v -> v.isEmpty() || v.equals(INFINITY) ? null : LocalDateTime.parse(v.substring(0, 19), DTF))
+                .toList()
+            )
+            .filter(v -> v.size() == 2)
+            .map(v -> Interval.of(v.get(0), v.get(1), view.startsWith("["), view.endsWith("]")))
+            .getOrElseThrow(() -> new SQLException("Интервал невалиден."));
     }
 
     public static Object localDateTimeRange(Interval<LocalDateTime> localDateTimeInterval) {

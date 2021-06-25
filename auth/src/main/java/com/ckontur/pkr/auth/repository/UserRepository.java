@@ -2,6 +2,7 @@ package com.ckontur.pkr.auth.repository;
 
 import com.ckontur.pkr.common.model.Authority;
 import com.ckontur.pkr.common.model.User;
+import io.vavr.collection.Set;
 import io.vavr.control.Option;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
 
 import static com.ckontur.pkr.common.utils.SqlUtils.array;
 import static com.ckontur.pkr.common.utils.SqlUtils.setOf;

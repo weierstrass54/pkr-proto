@@ -2,18 +2,18 @@ package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotImplementedYetException;
+import com.ckontur.pkr.common.request.PageRequest;
 import com.ckontur.pkr.exam.model.question.Option;
 import com.ckontur.pkr.exam.model.question.*;
 import com.ckontur.pkr.exam.web.QuestionRequests;
 import io.vavr.Tuple2;
-import io.vavr.collection.HashMap;
+import io.vavr.Tuple3;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,31 +27,43 @@ import static io.vavr.Patterns.$Some;
 @Repository
 @RequiredArgsConstructor
 public class QuestionRepository {
-    private final NamedParameterJdbcTemplate parametrizedJdbcTemplate;
+    private final JdbcTemplate jdbcTemplate;
     private final OptionRepository optionRepository;
     private final AnswerRepository answerRepository;
 
     public io.vavr.control.Option<Question> findById(Long id) {
-
-        List<Option> options = optionRepository.findAllByQuestionId(id);
         return io.vavr.control.Option.ofOptional(
-            parametrizedJdbcTemplate.getJdbcTemplate().query("SELECT * FROM questions WHERE id = ?",
-                new QuestionMapper(HashMap.of(id, options)), id)
-            .stream().findAny()
-        );
+            jdbcTemplate.query(
+                "SELECT * FROM questions WHERE id = ?",
+                (rs, rowNum) -> new Tuple3<>(
+                    rs.getLong("id"), Question.Type.of(rs.getInt("type")), rs.getString("text")
+                ), id
+            ).stream().findAny()
+        ).map(q -> {
+            List<Option> options = optionRepository.findAllByQuestionId(q._1);
+            return switch(q._2) {
+                case SINGLE, MULTIPLE, SEQUENCE -> new AnsweredChoiceQuestion(
+                    q._1, q._2, q._3, options, answerRepository.findAllByChoiceQuestionId(q._1)
+                );
+                case  MATCHING -> new AnsweredMatchQuestion(
+                    q._1, q._2, q._3, options, answerRepository.findAllByMatchQuestionId(q._1)
+                );
+            };
+        });
     }
 
-    public List<Question> findAll() {
+    public List<Question> findAll(PageRequest pageRequest) {
         throw new NotImplementedYetException();
     }
 
-    public List<Question> findAllByIds(List<Long> ids) {
-        Map<Long, List<Option>> options = optionRepository.findAllByQuestionIds(ids);
+    public List<Question> findAllByExamId(Long examId) {
+        Map<Long, List<Option>> options = optionRepository.findAllByExamIdGroupedByQuestionId(examId);
         return List.ofAll(
-            parametrizedJdbcTemplate.query(
-                "SELECT * FROM questions WHERE id IN (:ids)",
-                new MapSqlParameterSource("ids", ids),
-                new QuestionMapper(options)
+            jdbcTemplate.query(
+                "SELECT q.* " +
+                "FROM exam_questions eq " +
+                "JOIN questions q ON q.id = eq.question_id " +
+                "WHERE eq.exam_id = ?", new QuestionMapper(options), examId
             )
         );
     }
@@ -91,7 +103,7 @@ public class QuestionRepository {
 
     private Try<Tuple2<Long, List<Long>>> createQuestionAndOptions(QuestionRequests.CreateQuestion question) {
         return io.vavr.control.Option.of(
-            parametrizedJdbcTemplate.getJdbcTemplate().queryForObject(
+            jdbcTemplate.queryForObject(
                 "INSERT INTO questions(type, text) VALUES (?, ?) RETURNING id", Long.class,
                     question.getType().getValue(), question.getText()))
         .toTry(() -> new CreateEntityException("Запрос создания вопроса не вернул результата."))
@@ -106,43 +118,9 @@ public class QuestionRepository {
         return findById(id).map(question -> {
             answerRepository.deleteByQuestionId(question.getId());
             optionRepository.deleteByQuestionId(question.getId());
-            parametrizedJdbcTemplate.getJdbcTemplate().update("DELETE FROM questions WHERE id = ?", id);
+            jdbcTemplate.update("DELETE FROM questions WHERE id = ?", id);
             return question;
         });
-    }
-
-    @RequiredArgsConstructor
-    private static class AnsweredChoiceQuestionMapper implements RowMapper<AnsweredChoiceQuestion> {
-        private final List<Option> options;
-        private final List<Long> answers;
-
-        @Override
-        public AnsweredChoiceQuestion mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new AnsweredChoiceQuestion(
-                rs.getLong("id"),
-                Question.Type.of(rs.getInt("type")),
-                rs.getString("text"),
-                options,
-                answers
-            );
-        }
-    }
-
-    @RequiredArgsConstructor
-    private static class AnsweredMatchQuestionMapper implements RowMapper<AnsweredMatchQuestion> {
-        private final List<Option> options;
-        private final Map<Long, Long> answers;
-
-        @Override
-        public AnsweredMatchQuestion mapRow(ResultSet rs, int rowNum) throws SQLException {
-            return new AnsweredMatchQuestion(
-                    rs.getLong("id"),
-                    Question.Type.of(rs.getInt("type")),
-                    rs.getString("text"),
-                    options,
-                    answers
-            );
-        }
     }
 
     @RequiredArgsConstructor

@@ -32,10 +32,7 @@ public class DetailedExamRepository extends ExamRepository {
 
     @Transactional
     public Option<DetailedExam> findById(Long id) {
-        List<Long> questionIds = List.ofAll(namedParameterJdbcTemplate.getJdbcTemplate().queryForList(
-            "SELECT question_id FROM exam_questions WHERE exam_id = ?", Long.class, id
-        ));
-        List<Question> questions = questionRepository.findAllByIds(questionIds);
+        List<Question> questions = questionRepository.findAllByExamId(id);
         final String query = "SELECT " +
             "e.id, q.name AS qualification, l.name AS level, e.duration, e.points_per_correct, e.percent_passed, " +
             "e.skippable, e.previousable, e.is_published " +

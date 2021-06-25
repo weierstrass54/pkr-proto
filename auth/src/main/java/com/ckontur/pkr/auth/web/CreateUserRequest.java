@@ -1,13 +1,13 @@
 package com.ckontur.pkr.auth.web;
 
 import com.ckontur.pkr.common.model.Authority;
+import io.vavr.collection.Set;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.NotEmpty;
-import java.util.Set;
 
 @Data
 @NoArgsConstructor
