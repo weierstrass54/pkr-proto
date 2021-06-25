@@ -1,5 +1,6 @@
 package com.ckontur.pkr.gstreamer.pipeline;
 
+import io.vavr.control.Try;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +11,6 @@ import org.freedesktop.gstreamer.message.Message;
 
 import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 
 @Slf4j
@@ -29,15 +29,12 @@ public class MediaPipeline {
 
     public static MediaState allOf(Collection<CompletableFuture<MediaState>> pipelines) {
         CompletableFuture.allOf(pipelines.toArray(new CompletableFuture[0]));
-        return pipelines.stream().map(p -> {
-            try {
-                return p.get();
-            }
-            catch (InterruptedException | ExecutionException e) {
+        return pipelines.stream().map(p ->
+            Try.of(p::get).getOrElseGet(e -> {
                 log.error("MediaPipeline execution error.", e);
                 return MediaState.error(e.getMessage());
-            }
-        }).reduce(MediaState.ok(), (s1, s2) -> {
+            })
+        ).reduce(MediaState.ok(), (s1, s2) -> {
             if (!s1.isOk() && !s2.isOk()) {
                 return MediaState.error(s1.getDescription() + ", " + s2.getDescription());
             }

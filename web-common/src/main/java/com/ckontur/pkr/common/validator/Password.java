@@ -1,5 +1,7 @@
 package com.ckontur.pkr.common.validator;
 
+import io.vavr.control.Option;
+
 import javax.validation.Constraint;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -8,7 +10,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Constraint(validatedBy = Password.PasswordValidator.class)
@@ -33,9 +34,7 @@ public @interface Password {
 
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
-            return Optional.ofNullable(value)
-                .map(this::isCorrect)
-                .orElse(nullable);
+            return Option.of(value).map(this::isCorrect).getOrElse(nullable);
         }
 
         private boolean isCorrect(String value) {

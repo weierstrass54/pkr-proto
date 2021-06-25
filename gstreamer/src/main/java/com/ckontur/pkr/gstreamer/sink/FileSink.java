@@ -24,19 +24,12 @@ public class FileSink implements Sink {
         if (append) {
             sj.add("append=true");
         }
-        switch (bufferMode) {
-            case FULL:
-                sj.add("buffer-mode=0");
-                break;
-            case LINE:
-                sj.add("buffer-mode=1");
-                break;
-            case UNBUFFERED:
-                sj.add("buffer-mode=2");
-                break;
-            case DEFAULT:
-                break;
-        }
+        sj.add(switch (bufferMode) {
+            case FULL -> "buffer-mode=0";
+            case LINE -> "buffer-mode=1";
+            case UNBUFFERED -> "buffer-mode=2";
+            case DEFAULT -> "";
+        });
         if (bufferSize != 65536) {
             sj.add(String.format("buffer-size=%d", bufferSize));
         }

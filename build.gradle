@@ -19,7 +19,8 @@ subprojects {
     }
 
     dependencies {
-        implementation 'ch.qos.logback:logback-classic:1.2.3'
+        implementation 'ch.qos.logback:logback-classic:1.2.3',
+            'io.vavr:vavr:0.10.3'
 
         compileOnly 'org.projectlombok:lombok:1.18.12'
         annotationProcessor 'org.projectlombok:lombok:1.18.12'

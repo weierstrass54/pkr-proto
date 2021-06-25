@@ -2,6 +2,7 @@ package com.ckontur.pkr.exam.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotFoundException;
+import com.ckontur.pkr.common.exception.UpdateEntityException;
 import com.ckontur.pkr.exam.model.Qualification;
 import com.ckontur.pkr.exam.repository.QualificationRepository;
 import com.ckontur.pkr.exam.web.CreateOrUpdateByNameRequest;
@@ -25,24 +26,25 @@ public class QualificationController {
 
     @GetMapping("/list")
     public List<Qualification> getAll() {
-        return qualificationRepository.getAll();
+        return qualificationRepository.findAll();
     }
 
     @PostMapping("/")
     public Qualification create(@Valid @RequestBody CreateOrUpdateByNameRequest request) {
         return qualificationRepository.create(request.getName())
-            .orElseThrow(() -> new CreateEntityException("Не удалось создать новую квалификацию."));
+            .getOrElseThrow(() -> new CreateEntityException("Не удалось создать новую квалификацию."));
     }
 
     @PutMapping("/{id}")
     public Qualification change(@PathVariable("id") Long id, @Valid @RequestBody CreateOrUpdateByNameRequest request) {
         return qualificationRepository.updateById(id, request.getName())
-            .orElseThrow(() -> new NotFoundException("Квалификация " + id + " не найдена."));
+            .getOrElseThrow(t -> new UpdateEntityException(t.getMessage(), t))
+            .getOrElseThrow(() -> new NotFoundException("Уровень квалификации " + id + " не найден."));
     }
 
     @DeleteMapping("/{id}")
     public Qualification delete(@PathVariable("id") Long id) {
         return qualificationRepository.deleteById(id)
-            .orElseThrow(() -> new NotFoundException("Квалификация " + id + " не найдена."));
+            .getOrElseThrow(() -> new NotFoundException("Квалификация " + id + " не найдена."));
     }
 }

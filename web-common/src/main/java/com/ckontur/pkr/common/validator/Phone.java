@@ -1,5 +1,7 @@
 package com.ckontur.pkr.common.validator;
 
+import io.vavr.control.Option;
+
 import javax.validation.Constraint;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -8,7 +10,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Constraint(validatedBy = Phone.PhoneValidator.class)
@@ -24,9 +25,7 @@ public @interface Phone {
 
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
-            return Optional.ofNullable(value)
-                .map(v -> PHONE_REGEX.matcher(v).matches())
-                .orElse(true);
+            return Option.of(value).map(v -> PHONE_REGEX.matcher(v).matches()).getOrElse(true);
         }
     }
 }

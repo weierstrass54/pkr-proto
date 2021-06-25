@@ -1,5 +1,7 @@
 package com.ckontur.pkr.common.validator;
 
+import io.vavr.control.Option;
+
 import javax.validation.Constraint;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
@@ -8,7 +10,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Optional;
 
 @Constraint(validatedBy = Login.LoginValidator.class)
 @Target(ElementType.FIELD)
@@ -29,9 +30,9 @@ public @interface Login {
 
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
-            return Optional.ofNullable(value)
+            return Option.of(value)
                 .map(v -> v.length() >= 3 && v.length() <= 50 && v.indexOf(' ') == -1)
-                .orElse(nullable);
+                .getOrElse(nullable);
         }
     }
 }

@@ -5,12 +5,12 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.Claim;
 import com.ckontur.pkr.common.model.User;
-import com.ckontur.pkr.common.utils.Pair;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.vavr.Tuple2;
+import io.vavr.control.Option;
+import io.vavr.control.Try;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.Optional;
 
 @Slf4j
 @Component
@@ -25,15 +25,14 @@ public class JwtVerifier {
         this.objectMapper = objectMapper;
     }
 
-    public Optional<Pair<String, User>> verify(String token) {
-        try {
+    public Option<Tuple2<String, User>> verify(String token) {
+        return Try.of(() -> {
             Claim authenticated = jwtVerifier.verify(token).getClaim("authenticated");
             User user = objectMapper.readValue(authenticated.asString(), User.class);
-            return Optional.of(Pair.of(token, user));
-        }
-        catch (Throwable t) {
-            log.error("{}", t.getMessage(), t);
-            return Optional.empty();
-        }
+            return Option.of(new Tuple2<>(token, user));
+        }).getOrElseGet(e -> {
+            log.error("{}", e.getMessage(), e);
+            return Option.none();
+        });
     }
 }

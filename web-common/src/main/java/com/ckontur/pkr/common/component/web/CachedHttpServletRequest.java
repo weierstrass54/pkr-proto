@@ -1,6 +1,7 @@
 package com.ckontur.pkr.common.component.web;
 
 import com.ckontur.pkr.common.exception.InvalidArgumentException;
+import io.vavr.control.Try;
 
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
@@ -51,12 +52,9 @@ public class CachedHttpServletRequest extends HttpServletRequestWrapper {
     }
 
     public String getBodyAsString() {
-        try {
+        return Try.of(() -> {
             byte[] body = content.toByteArray();
             return new String(body, 0, body.length, getCharacterEncoding());
-        }
-        catch (UnsupportedEncodingException e) {
-            throw new InvalidArgumentException("Cannot get request body.", e);
-        }
+        }).getOrElseThrow(e -> new InvalidArgumentException("Cannot get request body.", e));
     }
 }

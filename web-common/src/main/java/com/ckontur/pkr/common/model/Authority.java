@@ -1,10 +1,9 @@
 package com.ckontur.pkr.common.model;
 
 import com.ckontur.pkr.common.exception.InvalidEnumException;
+import io.vavr.collection.Stream;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
-
-import java.util.Arrays;
 
 @Getter
 public enum Authority implements GrantedAuthority {
@@ -20,10 +19,9 @@ public enum Authority implements GrantedAuthority {
     }
 
     public static Authority of(String value) {
-        return Arrays.stream(values())
+        return Stream.of(values())
             .filter(r -> r.name().equals(value.toUpperCase()))
-            .findAny()
-            .orElseThrow(() -> new InvalidEnumException("Роли " + value + " не существует."));
+            .getOrElseThrow(() -> new InvalidEnumException("Роли " + value + " не существует."));
     }
 
 }

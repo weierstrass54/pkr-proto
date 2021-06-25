@@ -2,8 +2,8 @@ package com.ckontur.pkr.crm.repository;
 
 import com.ckontur.pkr.common.model.Page;
 import com.ckontur.pkr.common.model.User;
+import com.ckontur.pkr.common.request.PageRequest;
 import com.ckontur.pkr.crm.model.CrmUser;
-import com.ckontur.pkr.crm.model.PageRequest;
 import com.ckontur.pkr.crm.web.UserRequests;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.RowMapper;

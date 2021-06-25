@@ -1,13 +1,13 @@
-package com.ckontur.pkr.crm.model;
+package com.ckontur.pkr.common.request;
 
 import com.ckontur.pkr.common.exception.InvalidEnumException;
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Locale;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @Getter
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -18,9 +18,9 @@ public class PageRequest {
 
     public static PageRequest of(Integer page, Integer size, Direction direction) {
         return new PageRequest(
-            Optional.ofNullable(page).filter(p -> p > 0).orElse(1),
-            Optional.ofNullable(size).filter(s -> s > 0).orElse(50),
-            Optional.ofNullable(direction).orElse(Direction.ASC)
+            Option.of(page).filter(p -> p > 0).getOrElse(1),
+            Option.of(size).filter(s -> s > 0).getOrElse(50),
+            Option.of(direction).getOrElse(Direction.ASC)
         );
     }
 
@@ -34,8 +34,7 @@ public class PageRequest {
         public static Direction of(String value) {
             return Stream.of(values()).filter(
                 d -> d.name().equals(value.toUpperCase(Locale.US))
-            ).findAny()
-            .orElseThrow(() -> new InvalidEnumException("Сортировка допускает только 'ACS' и 'DESC' значения"));
+            ).getOrElseThrow(() -> new InvalidEnumException("Сортировка допускает только 'ACS' и 'DESC' значения"));
         }
     }
 }

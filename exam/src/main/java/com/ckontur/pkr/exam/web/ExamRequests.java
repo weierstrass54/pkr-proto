@@ -1,6 +1,7 @@
 package com.ckontur.pkr.exam.web;
 
 import com.ckontur.pkr.common.validator.AtLeastOneNotEmpty;
+import io.vavr.control.Option;
 import lombok.Data;
 
 import javax.validation.constraints.Max;
@@ -9,7 +10,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 
 public class ExamRequests {
     @Data
@@ -44,13 +44,13 @@ public class ExamRequests {
         }
 
         public Boolean isSkippable() {
-            return Optional.ofNullable(skippable).orElse(true);
+            return Option.of(skippable).getOrElse(true);
         }
         public Boolean isPreviousable() {
-            return Optional.ofNullable(previousable).orElse(true);
+            return Option.of(previousable).getOrElse(true);
         }
         public Boolean isPublished() {
-            return Optional.ofNullable(isPublished).orElse(false);
+            return Option.of(isPublished).getOrElse(false);
         }
     }
 
@@ -76,8 +76,8 @@ public class ExamRequests {
         private Boolean previousable;
         private Boolean isPublished;
 
-        public Optional<Duration> getDuration() {
-            return Optional.ofNullable(duration).map(Duration::ofMinutes);
+        public Option<Duration> getDuration() {
+            return Option.of(duration).map(Duration::ofMinutes);
         }
     }
 

@@ -2,6 +2,7 @@ package com.ckontur.pkr.common.component.web;
 
 import com.ckontur.pkr.common.exception.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.vavr.control.Option;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +20,10 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
 
 @Slf4j
 @RestControllerAdvice
@@ -92,10 +95,9 @@ public class WebErrorHandler {
     @ResponseBody
     public ErrorMessage httpNotImplemented(CachedHttpServletRequest request, NotImplementedYetException e) {
         String method = request.getMethod();
-        String query =
-            Optional.ofNullable(request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI))
-                .map(Object::toString)
-                .orElseGet(request::getRequestURI) + getQueryString(request);
+        String query = Option.of(request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI))
+            .map(Object::toString)
+            .getOrElse(request::getRequestURI) + getQueryString(request);
         String body = request.getBodyAsString();
         return new ErrorMessage(method, query, body, e.getMessage(), new String[0]);
     }
@@ -108,35 +110,29 @@ public class WebErrorHandler {
 
     protected ErrorMessage getErrorMessage(CachedHttpServletRequest request, Throwable t, boolean withStacktrace) {
         String method = request.getMethod();
-        String query =
-            Optional.ofNullable(request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI))
-                .map(Object::toString)
-                .orElseGet(request::getRequestURI) + getQueryString(request);
+        String query = Option.of(request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI))
+            .map(Object::toString)
+            .getOrElse(request::getRequestURI) + getQueryString(request);
         String body = request.getBodyAsString();
-        String errorMessage = Optional.ofNullable(t).map(th -> {
-            if (th instanceof MethodArgumentNotValidException) {
-                MethodArgumentNotValidException manve = (MethodArgumentNotValidException)th;
-                return manve.getBindingResult().getAllErrors().stream()
-                    .map(ObjectError::getDefaultMessage).collect(Collectors.joining(", "));
-            } else if (t instanceof NullPointerException) {
-                return "NPE.";
-            } else
-                return th.getMessage();
-        }).orElse("");
+        String errorMessage = Option.of(t).map(th -> Match(th).of(
+            Case($(instanceOf(MethodArgumentNotValidException.class)), manve ->
+                manve.getBindingResult().getAllErrors().stream().map(ObjectError::getDefaultMessage).collect(Collectors.joining(", "))),
+            Case($(instanceOf(NullPointerException.class)), __ -> "NPE."),
+            Case($(), Throwable::getMessage)
+        )).getOrElse("");
         String[] stacktrace = withStacktrace ? getStacktrace(t) : new String[0];
 
         return new ErrorMessage(method, query, body, errorMessage, stacktrace);
     }
 
     private String getQueryString(HttpServletRequest request) {
-        return Optional.ofNullable(request.getQueryString()).map(qs -> "?" + qs).orElse("");
+        return Option.of(request.getQueryString()).map(qs -> "?" + qs).getOrElse("");
     }
 
     private String[] getStacktrace(Throwable e) {
-        return Arrays.stream(Optional.ofNullable(e)
-                .map(Throwable::getStackTrace)
-                .orElseGet(() -> Thread.currentThread().getStackTrace()))
-                .map(StackTraceElement::toString).toArray(String[]::new);
+        return Arrays.stream(
+            Option.of(e).map(Throwable::getStackTrace).getOrElse(() -> Thread.currentThread().getStackTrace())
+        ).map(StackTraceElement::toString).toArray(String[]::new);
     }
 
     @Getter

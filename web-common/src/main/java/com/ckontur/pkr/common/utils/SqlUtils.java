@@ -1,5 +1,7 @@
 package com.ckontur.pkr.common.utils;
 
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
 import lombok.experimental.UtilityClass;
 
 import java.sql.Array;
@@ -8,11 +10,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @UtilityClass
 public class SqlUtils {
@@ -28,9 +28,9 @@ public class SqlUtils {
     }
 
     public static <T> String array(Collection<T> values, Function<T, String> mapper) {
-        return Optional.ofNullable(values)
+        return Option.of(values)
             .map(v -> "{" + v.stream().map(mapper).collect(Collectors.joining(",")) + "}")
-            .orElse(null);
+            .getOrElse((String)null);
     }
 
     public static Interval<LocalDateTime> localDateTimeIntervalOf(Object object) throws SQLException {
@@ -47,8 +47,8 @@ public class SqlUtils {
 
     public static Object localDateTimeRange(Interval<LocalDateTime> localDateTimeInterval) {
         return (localDateTimeInterval.isIncludeStart() ? '[' : '(') +
-            Optional.ofNullable(localDateTimeInterval.getStart()).map(d -> d.format(DTF)).orElse(INFINITY) +
-            Optional.ofNullable(localDateTimeInterval.getFinish()).map(d -> d.format(DTF)).orElse(INFINITY) +
+            Option.of(localDateTimeInterval.getStart()).map(d -> d.format(DTF)).getOrElse(INFINITY) +
+            Option.of(localDateTimeInterval.getFinish()).map(d -> d.format(DTF)).getOrElse(INFINITY) +
             (localDateTimeInterval.isIncludeFinish() ? ']' : ')');
     }
 

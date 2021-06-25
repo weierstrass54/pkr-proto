@@ -1,5 +1,8 @@
 package com.ckontur.pkr.common.validator;
 
+import io.vavr.collection.Stream;
+import io.vavr.control.Option;
+import io.vavr.control.Try;
 import org.springframework.beans.BeanUtils;
 
 import javax.validation.Constraint;
@@ -11,9 +14,13 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.List;
+import java.util.Map;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static io.vavr.API.*;
+import static io.vavr.Predicates.instanceOf;
 
 @Constraint(validatedBy = AtLeastOneNotEmpty.AtLeastOneNotEmptyValidator.class)
 @Target(ElementType.TYPE)
@@ -34,41 +41,31 @@ public @interface AtLeastOneNotEmpty {
 
         @Override
         public boolean isValid(Object value, ConstraintValidatorContext context) {
-            try {
-                for (PropertyDescriptor pd: getPropertyDescriptors(value)) {
-                    Object obj = pd.getReadMethod().invoke(value);
-                    if (obj != null) {
-                        if (obj instanceof CharSequence) {
-                            return !((CharSequence) obj).isEmpty();
-                        }
-                        if (obj instanceof Collection<?>) {
-                            return !((Collection<?>) obj).isEmpty();
-                        }
-                        if (obj instanceof Map<?, ?>) {
-                            return !((Map<?, ?>) obj).isEmpty();
-                        }
-                        if (obj instanceof Object[]) {
-                            return ((Object[]) obj).length > 0;
-                        }
-                        return true;
-                    }
-                }
-                return false;
-            }
-            catch (Throwable t) {
-                return false;
-            }
+            boolean isInvalid = Try.sequence(
+                getPropertyDescriptors(value).stream().map(pd ->
+                    Try.of(() -> pd.getReadMethod().invoke(pd))
+                        .map(Option::of)
+                        .filter(Option::isDefined)
+                        .map(Option::get)
+                        .map(obj -> Match(obj).of(
+                            Case($(instanceOf(CharSequence.class)), CharSequence::isEmpty),
+                            Case($(instanceOf(Collection.class)), Collection::isEmpty),
+                            Case($(instanceOf(Map.class)), Map::isEmpty),
+                            Case($(instanceOf(Object[].class)), objs -> objs.length == 0),
+                            Case($(), __ -> false)
+                        ))
+                    )
+                .collect(Collectors.toList())
+            ).getOrElse(Seq(true)).fold(true, (a, b) -> a && b);
+            return !isInvalid;
         }
 
         private List<PropertyDescriptor> getPropertyDescriptors(Object value) {
-            if (value == null) {
-                return Collections.emptyList();
-            }
-            PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(value.getClass());
-            if (fields.isEmpty()) {
-                return Arrays.asList(pds);
-            }
-            return Stream.of(pds).filter(pd -> fields.contains(pd.getName())).collect(Collectors.toList());
+            return Option.of(value).map(v -> {
+                PropertyDescriptor[] pds = BeanUtils.getPropertyDescriptors(v.getClass());
+                return !fields.isEmpty() ? Stream.of(pds).filter(pd -> fields.contains(pd.getName())).collect(Collectors.toList()) :
+                    Arrays.asList(pds);
+            }).getOrElse(Collections.emptyList());
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.ckontur.pkr.exam.repository;
 
+import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.exam.model.Qualification;
+import io.vavr.control.Option;
+import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -9,37 +12,47 @@ import org.springframework.stereotype.Repository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Optional;
+
+import static io.vavr.API.*;
+import static io.vavr.Patterns.$None;
+import static io.vavr.Patterns.$Some;
 
 @Repository
 @RequiredArgsConstructor
 public class QualificationRepository {
     private final JdbcTemplate jdbcTemplate;
 
-    public List<Qualification> getAll() {
+    public List<Qualification> findAll() {
         return jdbcTemplate.query("SELECT * FROM qualifications", QualificationMapper.INSTANCE);
     }
 
-    public Optional<Qualification> getById(Long id) {
-        return jdbcTemplate.query("SELECT * FROM qualifications WHERE id = ?", QualificationMapper.INSTANCE, id)
-            .stream().findAny();
+    public Option<Qualification> findById(Long id) {
+        return Option.ofOptional(
+            jdbcTemplate.query("SELECT * FROM qualifications WHERE id = ?", QualificationMapper.INSTANCE, id)
+                .stream().findAny()
+        );
     }
 
-    public Optional<Qualification> create(String name) {
-        return jdbcTemplate.query(
-            "INSERT INTO qualifications(name) VALUES (?) RETURNING *", QualificationMapper.INSTANCE, name
-        ).stream().findAny();
+    public Try<Qualification> create(String name) {
+        return Try.of(() -> jdbcTemplate.query("INSERT INTO qualifications(name) VALUES (?) RETURNING *", QualificationMapper.INSTANCE, name).stream().findAny())
+            .map(Option::ofOptional)
+            .flatMap(o -> Match(o).of(
+                Case($Some($()), Try::success),
+                Case($None(), () -> Try.failure(new CreateEntityException("Запрос создания квалификации не вернул результата.")))
+            ));
     }
 
-    public Optional<Qualification> updateById(Long id, String name) {
-        return jdbcTemplate.query(
+    public Try<Option<Qualification>> updateById(Long id, String name) {
+        return Try.of(() -> jdbcTemplate.query(
             "UPDATE qualifications SET name = ? WHERE id = ? RETURNING *", QualificationMapper.INSTANCE, name, id
-        ).stream().findAny();
+        ).stream().findAny()).map(Option::ofOptional);
     }
 
-    public Optional<Qualification> deleteById(Long id) {
-        return jdbcTemplate.query("DELETE FROM qualifications WHERE id = ? RETURNING *", QualificationMapper.INSTANCE, id)
-            .stream().findAny();
+    public Option<Qualification> deleteById(Long id) {
+        return Option.ofOptional(
+            jdbcTemplate.query("DELETE FROM qualifications WHERE id = ? RETURNING *", QualificationMapper.INSTANCE, id)
+                .stream().findAny()
+        );
     }
 
     private static class QualificationMapper implements RowMapper<Qualification> {

@@ -1,7 +1,6 @@
 package com.ckontur.pkr.exam.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
-import com.ckontur.pkr.common.exception.NotImplementedYetException;
 import com.ckontur.pkr.exam.model.Question;
 import com.ckontur.pkr.exam.repository.QuestionRepository;
 import com.ckontur.pkr.exam.web.QuestionRequests;
@@ -30,29 +29,23 @@ public class QuestionController {
 
     @PostMapping("/singleOrMultiple")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Question createSingleOrMultiple(
-        @Valid @RequestBody QuestionRequests.CreateSingleOrMultipleQuestion question
-    ) {
+    public Question createSingleOrMultiple(@Valid @RequestBody QuestionRequests.CreateSingleOrMultipleQuestion question) {
        return questionRepository.create(question)
-           .orElseThrow(() -> new CreateEntityException("Не удалось создать вопрос."));
+           .getOrElseThrow(t -> new CreateEntityException("Не удалось создать вопрос.", t));
     }
 
     @PostMapping("/sequence")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Question createSequence(
-        @Valid @RequestBody QuestionRequests.CreateSequenceQuestion question
-    ) {
+    public Question createSequence(@Valid @RequestBody QuestionRequests.CreateSequenceQuestion question) {
         return questionRepository.create(question)
-            .orElseThrow(() -> new CreateEntityException("Не удалось создать вопрос."));
+            .getOrElseThrow(t -> new CreateEntityException("Не удалось создать вопрос.", t));
     }
 
     @PostMapping("/match")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public Question createMatch(
-        @Valid @RequestBody QuestionRequests.CreateMatchQuestion question
-    ) {
+    public Question createMatch(@Valid @RequestBody QuestionRequests.CreateMatchQuestion question) {
         return questionRepository.create(question)
-            .orElseThrow(() -> new CreateEntityException("Не удалось создать вопрос."));
+            .getOrElseThrow(t -> new CreateEntityException("Не удалось создать вопрос.", t));
     }
 
 }

@@ -23,10 +23,9 @@ public class Option {
         private final int value;
 
         public static Type of(int value) {
-            return Stream.of(values())
-                .filter(t -> t.value == value)
-                .findAny()
-                .orElseThrow(() -> new InvalidEnumException("Типа ответа " + value + " не существует."));
+            return io.vavr.control.Option.ofOptional(
+                Stream.of(values()).filter(t -> t.value == value).findAny()
+            ).getOrElseThrow(() -> new InvalidEnumException("Типа ответа " + value + " не существует."));
         }
     }
 }

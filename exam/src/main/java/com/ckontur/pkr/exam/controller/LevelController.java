@@ -2,6 +2,7 @@ package com.ckontur.pkr.exam.controller;
 
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotFoundException;
+import com.ckontur.pkr.common.exception.UpdateEntityException;
 import com.ckontur.pkr.exam.model.Level;
 import com.ckontur.pkr.exam.repository.LevelRepository;
 import com.ckontur.pkr.exam.web.CreateOrUpdateByNameRequest;
@@ -25,24 +26,25 @@ public class LevelController {
 
     @GetMapping("/list")
     public List<Level> getAll() {
-        return levelRepository.getAll();
+        return levelRepository.findAll();
     }
 
     @PostMapping("/")
     public Level create(@Valid @RequestBody CreateOrUpdateByNameRequest request) {
         return levelRepository.create(request.getName())
-            .orElseThrow(() -> new CreateEntityException("Не удалось создать новый уровень квалификации."));
+            .getOrElseThrow(() -> new CreateEntityException("Не удалось создать новый уровень квалификации."));
     }
 
     @PutMapping("/{id}")
     public Level change(@PathVariable("id") Long id, @Valid @RequestBody CreateOrUpdateByNameRequest request) {
         return levelRepository.updateById(id, request.getName())
-            .orElseThrow(() -> new NotFoundException("Уровень квалификации " + id + " не найден."));
+            .getOrElseThrow(t -> new UpdateEntityException(t.getMessage(),t))
+            .getOrElseThrow(() -> new NotFoundException("Уровень квалификации " + id + " не найден."));
     }
 
     @DeleteMapping("/{id}")
     public Level delete(@PathVariable("id") Long id) {
         return levelRepository.deleteById(id)
-            .orElseThrow(() -> new NotFoundException("Уровень квалификации " + id + " не найден."));
+            .getOrElseThrow(() -> new NotFoundException("Уровень квалификации " + id + " не найден."));
     }
 }

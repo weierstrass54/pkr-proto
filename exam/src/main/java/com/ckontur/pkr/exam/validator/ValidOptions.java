@@ -2,6 +2,7 @@ package com.ckontur.pkr.exam.validator;
 
 import com.ckontur.pkr.exam.model.Option;
 import com.ckontur.pkr.exam.model.Question;
+import io.vavr.control.Try;
 import org.springframework.beans.BeanUtils;
 
 import javax.validation.Constraint;
@@ -13,7 +14,9 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Constraint(validatedBy = ValidOptions.ValidOptionsValidator.class)
@@ -49,36 +52,21 @@ public @interface ValidOptions {
                         case MATCHING -> isValidMatchOptions(options);
                     };
                 })
-                .orElse(!required);
+                .getOrElse(!required);
         }
 
-        private Optional<Question.Type> getType(Object value) {
-            return Optional.ofNullable(value)
-                .map(__ -> BeanUtils.getPropertyDescriptor(value.getClass(), typeField))
+        private io.vavr.control.Option<Question.Type> getType(Object value) {
+            return Try.of(() -> BeanUtils.getPropertyDescriptor(value.getClass(), typeField))
                 .map(PropertyDescriptor::getReadMethod)
-                .flatMap(rm -> {
-                    try {
-                        return Optional.of((Question.Type) rm.invoke(value));
-                    }
-                    catch (Throwable __) {
-                        return Optional.empty();
-                    }
-                });
+                .flatMap(rm -> Try.of(() -> (Question.Type) rm.invoke(value)))
+                .toOption();
         }
 
         private List<Option> getOptions(Object value) {
-            return Optional.ofNullable(value)
-                .map(__ -> BeanUtils.getPropertyDescriptor(value.getClass(), optionsField))
+            return Try.of(() -> BeanUtils.getPropertyDescriptor(value.getClass(), optionsField))
                 .map(PropertyDescriptor::getReadMethod)
-                .map(rm -> {
-                    try {
-                        return ((List<?>)rm.invoke(value)).stream().map(o -> (Option) o).collect(Collectors.toList());
-                    }
-                    catch (Throwable __) {
-                        return Collections.<Option>emptyList();
-                    }
-                })
-                .orElse(Collections.emptyList());
+                .flatMap(rm -> Try.of(() -> ((List<?>)rm.invoke(value)).stream().map(o -> (Option) o).collect(Collectors.toList())))
+                .getOrElse(Collections.emptyList());
         }
 
         private boolean isValidChoiceOptions(List<Option> options) {
