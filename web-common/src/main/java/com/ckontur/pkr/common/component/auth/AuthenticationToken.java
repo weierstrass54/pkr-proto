@@ -9,7 +9,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 public class AuthenticationToken extends UsernamePasswordAuthenticationToken {
 
     public AuthenticationToken(Tuple2<String, User> auth) {
-        super(auth._2, auth._1, auth._2.getAuthorities());
+        super(auth._2, auth._1, auth._2.getAuthorities().toJavaSet());
     }
 
 }

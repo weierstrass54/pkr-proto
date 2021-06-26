@@ -1,9 +1,9 @@
 package com.ckontur.pkr.exam.controller;
 
-import com.ckontur.pkr.common.component.auth.AuthenticationToken;
 import com.ckontur.pkr.common.exception.CreateEntityException;
 import com.ckontur.pkr.common.exception.NotFoundException;
 import com.ckontur.pkr.common.exception.NotImplementedYetException;
+import com.ckontur.pkr.common.model.User;
 import com.ckontur.pkr.exam.model.DetailedExam;
 import com.ckontur.pkr.exam.model.Exam;
 import com.ckontur.pkr.exam.repository.DetailedExamRepository;
@@ -54,7 +54,7 @@ public class ExamController {
 
     @GetMapping("/")
     @PreAuthorize("hasAuthority('EXAMINEE')")
-    public DetailedExam getByExaminee(@AuthenticationPrincipal AuthenticationToken principal) {
+    public DetailedExam getByExaminee(@AuthenticationPrincipal User user) {
         throw new NotImplementedYetException();
     }
 
@@ -71,7 +71,7 @@ public class ExamController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ADMIN', 'CRM')")
-    public DetailedExam change(@PathVariable("id") Long id, ExamRequests.ChangeExam exam) throws Throwable {
+    public DetailedExam change(@PathVariable("id") Long id, ExamRequests.ChangeExam exam) {
         return examRepository.updateById(id, exam)
             .getOrElseThrow(t -> Match(t).of(
                 Case($(instanceOf(DataIntegrityViolationException.class)), __ ->

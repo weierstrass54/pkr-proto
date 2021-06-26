@@ -24,13 +24,9 @@ import javax.validation.Valid;
 public class QuestionController {
     private final QuestionRepository questionRepository;
 
-    @GetMapping("/list")
-    public List<Question> findAll(
-        @RequestParam(value = "page", required = false, defaultValue = "1") int page,
-        @RequestParam(value = "size", required = false, defaultValue = "50") int size,
-        @RequestParam(value = "sort", required = false, defaultValue = "ASC") String sort
-    ) {
-        return questionRepository.findAll(PageRequest.of(page, size, PageRequest.Direction.of(sort)));
+    @GetMapping("/{examId}/list")
+    public List<Question> findAllByExamId(@PathVariable Long examId) {
+        return questionRepository.findAllByExamIdWithAnswers(examId);
     }
 
     @PostMapping("/singleOrMultiple")

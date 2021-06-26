@@ -1,11 +1,16 @@
 package com.ckontur.pkr.exam.repository;
 
+import com.ckontur.pkr.exam.model.question.Answer;
+import com.ckontur.pkr.exam.model.question.ChoiceAnswer;
+import com.ckontur.pkr.exam.model.question.MatchAnswer;
 import com.ckontur.pkr.exam.model.question.Option;
 import io.vavr.Tuple2;
 import io.vavr.collection.HashMap;
 import io.vavr.collection.List;
 import io.vavr.collection.Map;
 import io.vavr.control.Try;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -17,8 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnswerRepository {
     private final NamedParameterJdbcTemplate parametrizedJdbcTemplate;
 
-    public List<Long> findAllByChoiceQuestionId(Long questionId) {
-        final String query = "SELECT option_id FROM (" +
+    @Transactional
+    public List<Answer> findAllByQuestionId(Long questionId) {
+        final String queryChoices = "SELECT option_id FROM (" +
                 "SELECT option_id, 0 AS ordinal " +
                 "FROM options o " +
                 "JOIN answers_list al ON al.option_id = o.id " +
@@ -30,23 +36,64 @@ public class AnswerRepository {
                 "WHERE o.question_id = :id" +
             ") t " +
             "ORDER BY t.ordinal";
-        return List.ofAll(
-            parametrizedJdbcTemplate.queryForList(query, new MapSqlParameterSource("id", questionId), Long.class)
+        List<Answer> choices = List.ofAll(
+            parametrizedJdbcTemplate.query(queryChoices,
+                new MapSqlParameterSource("id", questionId),
+                    (rs, rowNum) -> new ChoiceAnswer(rs.getLong("option_id")))
         );
-    }
 
-    public Map<Long, Long> findAllByMatchQuestionId(Long questionId) {
-        final String query = "SELECT " +
+        final String queryMatches = "SELECT " +
             "am.option_id_left, am.option_id_right " +
             "FROM options o " +
             "JOIN answers_matches am ON am.option_id_left = o.id " +
-            "WHERE o.question_id = ? AND type = ?";
-        return List.ofAll(
-            parametrizedJdbcTemplate.getJdbcTemplate().query(query,
-                (rs, rowNum) -> new Tuple2<>(rs.getLong(1), rs.getLong(2)),
-                questionId, Option.Type.LEFT.getValue()
+            "WHERE o.question_id = ? AND o.type = ?";
+        List<Answer> matches = List.ofAll(
+            parametrizedJdbcTemplate.getJdbcTemplate().query(queryMatches,
+                (rs, rowNum) -> new MatchAnswer(rs.getLong(1), rs.getLong(2)),
+                questionId, Option.Type.LEFT.getValue())
+        );
+        return choices.appendAll(matches);
+    }
+
+    @Transactional
+    public Map<Long, List<Answer>> findAllByExamIdGroupedByQuestionId(Long examId) {
+        final String queryChoices = "SELECT " +
+            "id, option_id FROM ( " +
+                "SELECT q.id, al.option_id, 0 AS ordinal " +
+                "FROM exam_questions eq " +
+                "JOIN questions q ON q.id = eq.question_id " +
+                "JOIN options o ON o.question_id = q.id " +
+                "JOIN answers_list al ON al.option_id = o.id " +
+                "WHERE eq.exam_id = :examId " +
+                "UNION " +
+                "SELECT q.id, as.option_id, as.ordinal " +
+                "FROM exam_questions eq " +
+                "JOIN questions q ON q.id = eq.question_id " +
+                "JOIN options o ON o.question_id = q.id " +
+                "JOIN answers_sequence as ON as.option_id = o.id " +
+                "WHERE eq.exam_id = :examId " +
+            ") t " +
+            "ORDER BY t.ordinal";
+        List<Tuple2<Long, Answer>> choiceAnswers = List.ofAll(
+            parametrizedJdbcTemplate.query(queryChoices,
+                new MapSqlParameterSource("examId", examId),
+                    (rs, rowNum) -> new Tuple2<>(rs.getLong(1), new ChoiceAnswer(rs.getLong(2)))
             )
-        ).collect(HashMap.collector());
+        );
+
+        final String queryMatches = "SELECT " +
+            "q.id, am.option_id_left, am.option_id_right " +
+            "FROM exam_questions eq " +
+            "JOIN questions q ON eq.question_id = q.id " +
+            "JOIN options o ON o.question_id = q.id " +
+            "JOIN answers_matches am ON am.option_id_left = o.id AND o.type = ? " +
+            "WHERE eq.exam_id = ?";
+        List<Tuple2<Long, Answer>> matchAnswers = List.ofAll(
+            parametrizedJdbcTemplate.getJdbcTemplate().query(queryMatches,
+                (rs, rowNum) -> new Tuple2<>(rs.getLong(1), new MatchAnswer(rs.getLong(2), rs.getLong(3))),
+                    Option.Type.LEFT.getValue(), examId)
+        );
+        return choiceAnswers.appendAll(matchAnswers).groupBy(Tuple2::_1).mapValues(__ -> __.map(Tuple2::_2));
     }
 
     @Transactional
