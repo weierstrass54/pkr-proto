@@ -26,6 +26,11 @@ public class ExamListDeserializer extends JsonDeserializer<PassRequests.ExamList
         JsonNode jn = Try.of(() -> (JsonNode) p.getCodec().readTree(p))
             .getOrElseThrow(t -> new InvalidArgumentException("Не удалось прочитать json в теле запроса.", t));
 
+        Long examId = Option.of(jn.get("examId"))
+            .filter(JsonNode::isLong)
+            .map(JsonNode::asLong)
+            .getOrElseThrow(() -> new InvalidArgumentException("Поле examId невалидно."));
+
         Long recordId = Option.of(jn.get("recordId"))
             .filter(JsonNode::isLong)
             .map(JsonNode::asLong)
@@ -37,7 +42,7 @@ public class ExamListDeserializer extends JsonDeserializer<PassRequests.ExamList
             .map(this::deserializeAnswer)
             .collect(HashMap.collector());
 
-        return new PassRequests.ExamList(recordId, answers);
+        return new PassRequests.ExamList(recordId, examId, answers);
     }
 
     private Tuple2<Long, List<Answer>> deserializeAnswer(JsonNode node) {

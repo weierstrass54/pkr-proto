@@ -15,6 +15,7 @@ public class PassRequests {
     @JsonDeserialize(using = ExamListDeserializer.class)
     public static class ExamList {
         private final Long recordId;
+        private final Long examId;
         private final Map<Long, List<Answer>> answers;
     }
 }

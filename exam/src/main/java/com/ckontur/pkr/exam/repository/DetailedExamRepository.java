@@ -9,9 +9,9 @@ import io.vavr.control.Option;
 import io.vavr.control.Try;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +26,7 @@ import static io.vavr.Patterns.$Some;
 @Repository
 public class DetailedExamRepository extends ExamRepository {
     @Autowired
-    public DetailedExamRepository(NamedParameterJdbcTemplate jdbcTemplate, QuestionRepository questionRepository) {
+    public DetailedExamRepository(JdbcTemplate jdbcTemplate, QuestionRepository questionRepository) {
         super(jdbcTemplate, questionRepository);
     }
 
@@ -41,7 +41,7 @@ public class DetailedExamRepository extends ExamRepository {
             "JOIN levels l ON e.level_id = l.id" +
             "WHERE e.id = ?";
         return Option.ofOptional(
-            namedParameterJdbcTemplate.getJdbcTemplate().query(query, new DetailedExamMapper(questions), id).stream().findAny()
+            jdbcTemplate.query(query, new DetailedExamMapper(questions), id).stream().findAny()
         );
     }
 
@@ -49,7 +49,7 @@ public class DetailedExamRepository extends ExamRepository {
     public Try<DetailedExam> create(ExamRequests.CreateExam exam) {
         final String query = "INSERT INTO exams(qualification_id, level_id, duration, points_per_correct, " +
                 "percent_passed, skippable, previousable, is_published) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING id";
-        return Try.of(() -> namedParameterJdbcTemplate.getJdbcTemplate().queryForObject(query, Long.class,
+        return Try.of(() -> jdbcTemplate.queryForObject(query, Long.class,
             exam.getQualificationId(), exam.getLevelId(), exam.getDuration().toMinutes(), exam.getPointsPerCorrect(),
             exam.getPercentPassed(), exam.isSkippable(), exam.isPreviousable(), exam.isPublished()
         )).map(this::findById)
@@ -62,7 +62,7 @@ public class DetailedExamRepository extends ExamRepository {
     @Transactional
     public Try<Option<DetailedExam>> updateById(Long id, ExamRequests.ChangeExam exam) {
         return Try.of(() ->
-            namedParameterJdbcTemplate.getJdbcTemplate().update(
+            jdbcTemplate.update(
                 "UPDATE exams SET " +
                     "qualification_id = COALESCE(?, qualification_id), " +
                     "level_id = COALESCE(?, level_id), " +
@@ -82,7 +82,7 @@ public class DetailedExamRepository extends ExamRepository {
     public Try<DetailedExam> addQuestionsByIds(Long id, List<Long> questionIds) {
         final String query = "INSERT INTO exam_questions(exam_id, question_id) VALUES (?, ?)";
         return Try.sequence(
-            questionIds.map(qId -> Try.of(() -> namedParameterJdbcTemplate.getJdbcTemplate().update(query, id, qId)))
+            questionIds.map(qId -> Try.of(() -> jdbcTemplate.update(query, id, qId)))
         ).flatMap(__ -> Match(findById(id)).of(
             Case($Some($()), Try::success),
             Case($None(), () -> Try.failure(new CreateEntityException("Запрос получения экзамена вернул пустоту.")))
@@ -91,7 +91,7 @@ public class DetailedExamRepository extends ExamRepository {
 
     @Transactional
     public Option<DetailedExam> removeQuestionsByIds(Long id, List<Long> questionIds) {
-        namedParameterJdbcTemplate.update(
+        jdbcTemplate.update(
             "DELETE FROM exam_questions WHERE exam_id = :exam_id AND question_id IN (:ids)",
             new MapSqlParameterSource("ids", questionIds).addValue("exam_id", id)
         );
@@ -101,8 +101,8 @@ public class DetailedExamRepository extends ExamRepository {
     @Transactional
     public Option<DetailedExam> deleteById(Long id) {
         return findById(id).map(detailedExam -> {
-            namedParameterJdbcTemplate.getJdbcTemplate().update("DELETE FROM exam_questions WHERE exam_id = ?", id);
-            namedParameterJdbcTemplate.getJdbcTemplate().update("DELETE FROM exams WHERE id = ?", id);
+            jdbcTemplate.update("DELETE FROM exam_questions WHERE exam_id = ?", id);
+            jdbcTemplate.update("DELETE FROM exams WHERE id = ?", id);
             return detailedExam;
         });
     }

@@ -2,6 +2,7 @@ package com.ckontur.pkr.exam.repository;
 
 import com.ckontur.pkr.exam.model.Exam;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -14,15 +15,15 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 public class ExamRepository {
-    protected final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+    protected final JdbcTemplate jdbcTemplate;
     protected final QuestionRepository questionRepository;
 
     public List<Exam> findAll() {
-        return namedParameterJdbcTemplate.getJdbcTemplate().query("SELECT * FROM exams", ExamMapper.INSTANCE);
+        return jdbcTemplate.query("SELECT * FROM exams", ExamMapper.INSTANCE);
     }
 
     public List<Exam> findAllByQualificationAndLevel(Long qualificationId, Long levelId) {
-        return namedParameterJdbcTemplate.getJdbcTemplate().query("SELECT * FROM exams WHERE qualification_id = ? AND level_id = ?",
+        return jdbcTemplate.query("SELECT * FROM exams WHERE qualification_id = ? AND level_id = ?",
             ExamMapper.INSTANCE, qualificationId, levelId);
     }
 
